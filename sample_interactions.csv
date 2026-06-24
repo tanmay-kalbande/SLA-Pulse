@@ -1,0 +1,9 @@
+Date,Media Type,Abandoned,Total Queue
+06/24/2026 09:15 AM,voice,no,10000
+06/24/2026 09:30 AM,voice,no,15000
+06/24/2026 09:45 AM,voice,yes,5000
+06/24/2026 10:00 AM,callback,no,2000
+06/24/2026 10:15 AM,voice,no,25000
+06/24/2026 10:30 AM,voice,yes,30000
+06/24/2026 10:45 AM,voice,no,8000
+06/24/2026 11:00 AM,voice,no,18000
