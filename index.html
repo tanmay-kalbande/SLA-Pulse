@@ -5,212 +5,393 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SLA Pulse | SLA Update Generator</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
+
     :root{
-      --nav:#24272E;
-      --nav-2:#24272E;
-      --accent:#2563EB;
-      --accent-2:#38BDF8;
-      --gold:#B45309;
-      --bg:#FFFFFF;
+      --rail-bg:#16191F;
+      --rail-border:#252930;
+      --accent:#4B5563;
+      --accent-dim:rgba(75,85,99,.10);
+      --accent-line:rgba(75,85,99,.30);
+      --ok:#1A7A56;
+      --ok-dim:rgba(26,122,86,.09);
+      --err:#C0392B;
+      --bg:#F2F4F7;
       --surface:#FFFFFF;
-      --surface-2:#F9FAFB;
-      --ink:#1F2937;
-      --muted:#64748B;
-      --line:#E1E6ED;
-      --line-strong:#CBD5E1;
-      --success:#107C41;
-      --error:#B42318;
-      --shadow:0 10px 22px rgba(31,41,55,.06);
+      --surface-2:#EEF0F4;
+      --ink:#181C24;
+      --muted:#6B7280;
+      --line:#DDE1E9;
+      --line-strong:#BCC2CE;
+      --mono:'IBM Plex Mono', 'Consolas', monospace;
+      --sans:'Inter', 'Segoe UI', Arial, sans-serif;
     }
-    *{box-sizing:border-box}
+
+    *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
     html,body{
       height:100%;width:100%;margin:0;overflow:hidden;
-      font-family:"Segoe UI",Arial,sans-serif;
+      font-family:var(--sans);
       background:var(--bg);color:var(--ink);
+      font-size:14px;
     }
     button,input,textarea{font:inherit}
+
+    /* ── APP SHELL ── */
     .app{
-      height:100vh;width:100vw;padding:14px;
-      display:grid;grid-template-columns:286px minmax(0,1fr);
-      gap:14px;overflow:hidden;
+      height:100vh;width:100vw;padding:12px;
+      display:grid;grid-template-columns:268px minmax(0,1fr);
+      gap:12px;overflow:hidden;
     }
 
+    /* ── SIDEBAR / RAIL ── */
     .rail{
       min-width:0;min-height:0;
-      background:var(--nav);
-      color:#fff;border-radius:6px;padding:18px;
+      background:var(--rail-bg);
+      color:#fff;
+      border:1px solid var(--rail-border);
+      border-radius:8px;
+      padding:20px 16px;
       display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;
-      gap:14px;box-shadow:var(--shadow);overflow:hidden;
+      gap:16px;overflow:hidden;
     }
-    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+
+    /* Brand */
+    .brand{display:flex;align-items:center;gap:11px;min-width:0}
     .logo{
-      width:42px;height:42px;border-radius:6px;
-      background:#F8FAFC;color:var(--nav);
-      display:grid;place-items:center;position:relative;flex:0 0 auto;
-      font-weight:900;font-size:14px;letter-spacing:.04em;
-      border:1px solid rgba(255,255,255,.18);
-    }
-    .logo:after{
-      content:"";position:absolute;right:7px;bottom:7px;
-      width:7px;height:7px;border-radius:50%;background:var(--accent);
+      width:42px;height:42px;
+      border-radius:6px;
+      background:#F8FAFC;
+      color:var(--rail-bg);
+      display:grid;place-items:center;
+      flex:0 0 auto;
+      font-family:var(--mono);font-weight:700;font-size:13px;
+      letter-spacing:.03em;
+      position:relative;
+      border:1px solid rgba(255,255,255,.15);
+      text-decoration:none;
+      cursor:pointer;
     }
     .brand-title{min-width:0}
-    .brand-title h1{margin:0;font-size:19px;line-height:1.05;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .brand-title p{margin:5px 0 0;color:#C5CEDA;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .scope-chip{
-      width:max-content;border-left:3px solid var(--accent);
-      color:#E2E8F0;padding:2px 0 2px 9px;font-size:11px;
-      font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    .brand-title h1{
+      margin:0;font-size:15px;line-height:1.1;color:#fff;
+      font-weight:700;letter-spacing:-.01em;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     }
-    .side-metrics{min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;overflow:hidden}
-    .side-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-    .side-head h2{margin:0;font-size:14px;color:#fff}
-    .side-head span{
-      background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.34);
-      color:#D7F4FF;border-radius:4px;padding:4px 7px;font-size:10px;font-weight:900;
+    .brand-title p{
+      margin:3px 0 0;color:#888;font-size:11px;
+      font-family:var(--mono);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     }
-    .metric-list{min-height:0;display:grid;grid-template-rows:repeat(8,minmax(0,1fr));gap:8px;overflow:hidden}
-    .side-card{
-      display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;
-      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
-      border-radius:5px;padding:8px 10px;min-width:0;min-height:0;
-    }
-    .side-card label{font-size:11px;color:#CBD5E1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .side-card strong{font-size:14px;color:#fff;white-space:nowrap}
-    .side-card.accent{background:rgba(37,99,235,.12);border-color:rgba(96,165,250,.32)}
-    .credit{border-top:1px solid rgba(255,255,255,.14);padding-top:12px;color:#C5CEDA;font-size:11px;line-height:1.35}
-    .credit b{display:block;color:#fff;font-size:12px;margin-top:2px}
 
+    .scope-chip{
+      display:inline-flex;align-items:center;gap:6px;
+      color:#555;font-family:var(--mono);font-size:10px;
+      font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    }
+    .scope-chip::before{
+      content:'';flex:0 0 auto;width:6px;height:6px;
+      border-radius:50%;background:var(--accent);
+      box-shadow:0 0 0 3px rgba(75,85,99,.2);
+    }
+
+    /* Side metrics */
+    .side-metrics{min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;overflow:hidden}
+    .side-head{
+      display:flex;align-items:center;justify-content:space-between;gap:8px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+      padding-bottom:8px;
+    }
+    .side-head h2{
+      margin:0;font-size:11px;color:#888;
+      font-family:var(--mono);font-weight:600;
+      letter-spacing:.07em;text-transform:uppercase;
+    }
+    .side-head span{
+      color:var(--accent);font-family:var(--mono);font-size:10px;
+      font-weight:600;letter-spacing:.06em;
+    }
+    .metric-list{
+      min-height:0;display:grid;
+      grid-template-rows:repeat(8,minmax(0,1fr));
+      gap:1px;overflow:hidden;
+      background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:5px;
+    }
+    .side-card{
+      display:grid;grid-template-columns:minmax(0,1fr) auto;
+      gap:6px;align-items:center;
+      background:var(--rail-bg);
+      padding:6px 10px;
+      min-width:0;min-height:0;
+      transition:background .12s;
+    }
+    .side-card:first-child{border-radius:5px 5px 0 0}
+    .side-card:last-child{border-radius:0 0 5px 5px}
+    .side-card label{
+      font-size:10px;color:#666;
+      font-family:var(--mono);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .side-card strong{font-size:13px;color:#e8e8e8;font-weight:600;white-space:nowrap;font-family:var(--mono)}
+    .side-card.accent{background:rgba(75,85,99,.12)}
+    .side-card.accent strong{color:#d0d5dd}
+
+    .credit{
+      border-top:1px solid rgba(255,255,255,.07);
+      padding-top:12px;color:#444;font-size:10px;
+      font-family:var(--mono);line-height:1.5;
+    }
+    .credit b{display:block;color:#999;font-size:11px;margin-top:2px;font-weight:600}
+
+    /* ── MAIN AREA ── */
     .main{
       min-width:0;min-height:0;display:grid;
-      grid-template-rows:106px minmax(0,1fr);gap:14px;overflow:hidden;
+      grid-template-rows:auto minmax(0,1fr);
+      gap:12px;overflow:hidden;
     }
+
+    /* Header strip */
     .header{
-      min-width:0;background:var(--surface);border:1px solid var(--line);
-      border-radius:6px;box-shadow:none;
-      display:grid;grid-template-columns:minmax(0,1fr) 390px;align-items:center;gap:18px;
+      min-width:0;
+      background:var(--surface);
+      border:1px solid var(--line);
+      border-radius:8px;
+      display:grid;
+      grid-template-columns:minmax(0,1fr) 360px;
+      align-items:center;gap:16px;
       padding:14px 18px;overflow:hidden;
     }
-    .header h1{margin:0;font-size:27px;color:var(--ink);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .header p{margin:7px 0 0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .header h1{
+      margin:0;font-size:22px;font-weight:700;
+      color:var(--ink);line-height:1;
+      letter-spacing:-.02em;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .header p{
+      margin:5px 0 0;font-size:12px;color:var(--muted);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+
+    /* Upload zone */
     .upload-box{
-      height:76px;display:grid;grid-template-columns:minmax(0,1fr) 150px;
-      grid-template-rows:14px 24px 18px;
-      align-items:start;column-gap:12px;row-gap:3px;
-      border:1px dashed var(--line-strong);background:var(--surface-2);
-      border-radius:6px;padding:10px 12px;cursor:pointer;overflow:hidden;
-      transition:border-color .16s ease, background .16s ease;
+      height:68px;display:grid;
+      grid-template-columns:minmax(0,1fr) 128px;
+      grid-template-rows:13px 22px 16px;
+      align-items:start;column-gap:12px;row-gap:2px;
+      border:1.5px dashed var(--line-strong);
+      background:var(--surface-2);
+      border-radius:6px;padding:9px 12px;cursor:pointer;overflow:hidden;
+      transition:border-color .15s, background .15s;
     }
     .upload-box:hover,.upload-box.dragging{
-      border-color:var(--accent);background:#F7FAFF;
+      border-color:var(--accent);background:#F4F5F7;
     }
     .upload-kicker{
       grid-column:1/2;grid-row:1/2;
-      color:var(--accent);font-size:11px;font-weight:900;
-      line-height:14px;
-      letter-spacing:.06em;text-transform:uppercase;
+      color:var(--accent);font-size:10px;font-weight:600;
+      line-height:13px;letter-spacing:.08em;text-transform:uppercase;
+      font-family:var(--mono);
     }
     .upload-title{
       grid-column:1/2;grid-row:2/3;min-width:0;
-      font-size:18px;line-height:24px;font-weight:850;color:var(--ink);
+      font-size:15px;line-height:22px;font-weight:600;color:var(--ink);
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     }
     .file-name{
       grid-column:1/2;grid-row:3/4;min-width:0;
-      font-size:13px;line-height:18px;color:var(--muted);
+      font-size:11px;line-height:16px;color:var(--muted);
+      font-family:var(--mono);
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     }
     .file-btn{
       grid-column:2/3;grid-row:1/4;align-self:center;
-      height:34px;border:1px solid var(--accent);
-      border-radius:5px;background:#fff;color:var(--accent);
-      font-size:12px;font-weight:850;padding:0 12px;display:grid;place-items:center;
-      white-space:nowrap;
+      height:32px;border:1.5px solid var(--accent);
+      border-radius:4px;background:transparent;color:var(--accent);
+      font-size:12px;font-weight:600;padding:0 12px;
+      display:grid;place-items:center;white-space:nowrap;
+      font-family:var(--mono);
+      transition:background .14s,color .14s;
+    }
+    .upload-box:hover .file-btn,.upload-box.dragging .file-btn{
+      background:var(--accent);color:#fff;
     }
     #fileInput{position:absolute;left:-9999px;opacity:0;width:1px;height:1px}
 
+    /* ── WORKSPACE PANELS ── */
     .workspace{
       min-height:0;display:grid;
-      grid-template-columns:minmax(420px,.92fr) minmax(470px,1.08fr);
-      gap:14px;overflow:hidden;
+      grid-template-columns:minmax(400px,.9fr) minmax(460px,1.1fr);
+      gap:12px;overflow:hidden;
     }
     .panel{
-      background:var(--surface);border:1px solid #E7ECF2;
-      border-radius:6px;box-shadow:none;
+      background:var(--surface);
+      border:1px solid var(--line);
+      border-radius:8px;
       padding:16px;min-width:0;min-height:0;overflow:hidden;
       display:grid;grid-template-rows:auto minmax(0,1fr);
     }
-    .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;min-width:0}
-    .panel-head h2{margin:0;font-size:16px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .badge{
-      background:#F8FAFC;color:#475569;border:1px solid #CBD5E1;
-      font-weight:850;border-radius:4px;padding:5px 8px;
-      font-size:11px;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis;
+    .panel-head{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:10px;margin-bottom:12px;min-width:0;
     }
+    .panel-head h2{
+      margin:0;font-size:13px;font-weight:600;
+      color:var(--muted);
+      font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .badge{
+      background:var(--surface-2);color:var(--muted);
+      border:1px solid var(--line);
+      font-weight:600;border-radius:3px;padding:3px 8px;
+      font-size:10px;font-family:var(--mono);
+      white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis;
+    }
+
+    /* KPI cards */
     .kpi-panel{grid-template-rows:auto minmax(0,1fr) auto}
     .kpis{
       display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
-      grid-template-rows:repeat(3,minmax(0,1fr));gap:10px;min-height:0;overflow:hidden;
+      grid-template-rows:repeat(3,minmax(0,1fr));gap:8px;
+      min-height:0;overflow:hidden;
     }
     .kpi{
-      border:1px solid #E7ECF2;border-radius:6px;background:#FFFFFF;
-      padding:13px;display:grid;grid-template-rows:auto 1fr auto;min-width:0;min-height:0;overflow:hidden;
+      border:1px solid var(--line);border-radius:6px;
+      background:var(--surface);
+      padding:12px 14px;
+      display:grid;grid-template-rows:auto 1fr auto;
+      min-width:0;min-height:0;overflow:hidden;
+      transition:border-color .15s;
+      position:relative;
     }
-    .kpi-label{color:var(--muted);font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .kpi-value{color:var(--ink);font-size:clamp(25px,2.6vw,36px);font-weight:900;line-height:1.05;align-self:center;overflow-wrap:anywhere}
-    #kDate{font-size:clamp(21px,2.15vw,29px);line-height:1.08}
-    .kpi-sub{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .kpi-label{
+      color:var(--muted);font-size:9.5px;
+      letter-spacing:.09em;text-transform:uppercase;
+      font-weight:600;font-family:var(--mono);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .kpi-value{
+      color:var(--ink);
+      font-size:clamp(22px,2.4vw,33px);
+      font-weight:700;font-family:var(--mono);
+      line-height:1.05;align-self:center;
+      overflow-wrap:anywhere;letter-spacing:-.02em;
+    }
+    #kDate{font-size:clamp(17px,1.8vw,24px);line-height:1.1;letter-spacing:0}
+    .kpi-sub{
+      color:var(--muted);font-size:10px;font-family:var(--mono);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+
+    /* Validation row */
     .validation{
-      margin-top:12px;border-top:1px solid var(--line);
-      padding-top:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+      margin-top:10px;border-top:1px solid var(--line);
+      padding-top:10px;display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
     }
     .check{
-      min-width:0;border:1px solid var(--line);background:var(--surface-2);
-      border-radius:6px;padding:9px 10px;
+      min-width:0;
+      border:1px solid var(--line);
+      background:var(--surface-2);
+      border-radius:5px;padding:8px 10px;
     }
-    .check span{display:block;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .check strong{display:block;margin-top:4px;color:var(--ink);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .check.ok strong{color:var(--success)}.check.err strong{color:var(--error)}
+    .check span{
+      display:block;color:var(--muted);font-size:9px;font-weight:600;
+      font-family:var(--mono);letter-spacing:.07em;text-transform:uppercase;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .check strong{
+      display:block;margin-top:3px;color:var(--ink);font-size:11px;
+      font-family:var(--mono);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .check.ok{border-color:rgba(34,137,107,.3);background:var(--ok-dim)}
+    .check.ok strong{color:var(--ok)}
+    .check.err{border-color:rgba(192,57,43,.25);background:rgba(192,57,43,.06)}
+    .check.err strong{color:var(--err)}
 
+    /* Message panel */
     .message-panel{grid-template-rows:auto minmax(0,1fr) auto auto}
     textarea{
-      width:100%;height:100%;min-height:0;border:1px solid var(--line);
-      border-radius:6px;background:#FFFFFF;color:#111827;padding:16px;
-      font:14px/1.52 Consolas,"Courier New",monospace;
+      width:100%;height:100%;min-height:0;
+      border:1px solid var(--line);
+      border-radius:6px;
+      background:var(--surface-2);
+      color:var(--ink);padding:14px 16px;
+      font:13px/1.6 var(--mono);
       resize:none;outline:none;white-space:pre-wrap;overflow:auto;
     }
+    textarea:focus{border-color:var(--accent);background:var(--surface)}
+
     .rules{
-      margin-top:10px;border:1px solid var(--line);border-radius:6px;
-      background:var(--surface-2);padding:9px 11px;color:var(--muted);
-      font-size:12px;
+      margin-top:8px;border:1px solid var(--line);border-radius:5px;
+      background:var(--surface-2);padding:8px 11px;color:var(--muted);
+      font-size:11px;font-family:var(--mono);
     }
-    .rules summary{cursor:pointer;color:var(--ink);font-weight:850}
-    .rules div{margin-top:8px;display:grid;gap:4px}
+    .rules summary{
+      cursor:pointer;color:var(--ink);font-weight:600;
+      list-style:none;display:flex;align-items:center;gap:6px;
+    }
+    .rules summary::before{content:'▶';font-size:8px;color:var(--accent)}
+    details[open] summary::before{content:'▼'}
+    .rules div{margin-top:7px;display:grid;gap:4px;line-height:1.5}
+
+    /* Actions bar */
     .actions{
-      display:grid;grid-template-columns:130px 130px 150px minmax(0,1fr);
-      gap:10px;align-items:center;margin-top:10px;overflow:hidden;
+      display:grid;
+      grid-template-columns:120px 128px 146px minmax(0,1fr);
+      gap:8px;align-items:center;margin-top:8px;overflow:hidden;
     }
     .btn{
-      height:40px;border:0;border-radius:5px;background:var(--accent);
-      color:#fff;font-size:13px;font-weight:850;cursor:pointer;
+      height:36px;border:0;border-radius:4px;
+      background:var(--accent);color:#fff;
+      font-size:12px;font-weight:600;cursor:pointer;
+      font-family:var(--mono);letter-spacing:.02em;
+      transition:opacity .14s,transform .1s;
     }
-    .btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent)}
-    .btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line-strong)}
-    .btn:hover{filter:brightness(.98)}
-    .status{text-align:right;min-width:0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .status.ok{color:var(--success);font-weight:800}.status.err{color:var(--error);font-weight:800}
+    .btn:hover{opacity:.88}
+    .btn:active{transform:scale(.98)}
+    .btn.secondary{
+      background:transparent;color:var(--accent);
+      border:1.5px solid var(--accent);
+    }
+    .btn.secondary:hover{background:var(--accent-dim)}
+    .btn.ghost{
+      background:var(--surface-2);color:var(--ink);
+      border:1px solid var(--line-strong);
+    }
+    .btn.ghost:hover{background:var(--line)}
 
+    .status{
+      text-align:right;min-width:0;font-size:11px;color:var(--muted);
+      font-family:var(--mono);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .status.ok{color:var(--ok);font-weight:600}
+    .status.err{color:var(--err);font-weight:600}
+
+    /* ── RESPONSIVE ── */
     @media(max-width:1180px){
-      .app{grid-template-columns:270px 1fr;padding:10px;gap:10px}.rail{padding:14px}
-      .header{grid-template-columns:1fr}.upload-box{width:100%}
-      .workspace{grid-template-columns:1fr 1fr}.actions{grid-template-columns:1fr 1fr}.status{display:none}
+      .app{grid-template-columns:248px 1fr;padding:10px;gap:10px}
+      .rail{padding:14px}
+      .header{grid-template-columns:1fr}
+      .upload-box{width:100%}
+      .workspace{grid-template-columns:1fr 1fr}
+      .actions{grid-template-columns:1fr 1fr}
+      .status{display:none}
     }
     @media(max-width:930px){
-      html,body{overflow:auto}.app{height:auto;min-height:100vh;overflow:visible;grid-template-columns:1fr}
-      .main{grid-template-rows:auto auto;overflow:visible}.workspace{grid-template-columns:1fr;overflow:visible}
-      .panel{min-height:360px}.message-panel{min-height:420px}.kpis{min-height:440px}
+      html,body{overflow:auto}
+      .app{height:auto;min-height:100vh;overflow:visible;grid-template-columns:1fr}
+      .main{grid-template-rows:auto auto;overflow:visible}
+      .workspace{grid-template-columns:1fr;overflow:visible}
+      .panel{min-height:360px}
+      .message-panel{min-height:420px}
+      .kpis{min-height:440px}
       .metric-list{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none}
-      .validation{grid-template-columns:1fr}.actions{grid-template-columns:1fr}
+      .validation{grid-template-columns:1fr}
+      .actions{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -218,10 +399,10 @@
   <main class="app">
     <aside class="rail" aria-label="Application information">
       <div class="brand">
-        <div class="logo">SLA</div>
+        <a href="SLA.html" class="logo">SLA</a>
         <div class="brand-title">
           <h1>SLA Pulse</h1>
-          <p>Team reporting utility</p>
+          <p>internal / v1.0</p>
         </div>
       </div>
       <div class="scope-chip">Internal Use</div>
@@ -239,7 +420,7 @@
         </div>
       </section>
       <section class="credit">
-        Developed by
+        built by
         <b>Tanmay Kalbande</b>
       </section>
     </aside>
@@ -247,13 +428,13 @@
       <header class="header">
         <div>
           <h1>SLA Update Generator</h1>
-          <p>Upload Interactions CSV to calculate daily and MTD SLA metrics.</p>
+          <p>Upload Interactions CSV — daily + MTD metrics calculated automatically.</p>
         </div>
         <label class="upload-box" id="uploadBox" for="fileInput">
           <span class="upload-kicker">CSV Upload</span>
           <span class="file-btn">Choose File</span>
           <strong class="upload-title">Drop Interactions.csv here</strong>
-          <span class="file-name" id="fileName">No file selected</span>
+          <span class="file-name" id="fileName">no file selected</span>
           <input id="fileInput" type="file" accept=".csv,text/csv" aria-label="Upload Interactions CSV" />
         </label>
       </header>
@@ -281,7 +462,7 @@
 
         <section class="panel message-panel">
           <div class="panel-head">
-            <h2>SLA Update Message</h2>
+            <h2>Generated Output</h2>
             <span class="badge">Output</span>
           </div>
           <textarea id="message" readonly>Upload Interactions.csv to generate the SLA update.</textarea>
@@ -294,10 +475,10 @@
             </div>
           </details>
           <div class="actions">
-            <button class="btn" id="copyBtn">Copy</button>
-            <button class="btn secondary" id="downloadBtn">Download TXT</button>
-            <button class="btn ghost" id="summaryBtn">Download Summary</button>
-            <div class="status" id="status">Status: Idle</div>
+            <button class="btn" id="copyBtn">Copy msg</button>
+            <button class="btn secondary" id="downloadBtn">→ .txt</button>
+            <button class="btn ghost" id="summaryBtn">→ Summary CSV</button>
+            <div class="status" id="status">idle</div>
           </div>
         </section>
       </section>
@@ -389,7 +570,7 @@
     function calculate(){
       if(!parsedRows.length){
         resetOutput();
-        setStatus('Waiting for CSV upload.');
+        setStatus('waiting for CSV.');
         setBadge('Waiting');
         setCheck('checkUpload','Waiting');
         setCheck('checkColumns','Not checked');
@@ -402,8 +583,11 @@
       const required={date:'Date',mediaType:'Media Type',abandoned:'Abandoned',totalQueue:'Total Queue'};
       const missing=Object.entries(required).filter(([key])=>!activeColumns[key]).map(([,label])=>label);
       if(missing.length){
-        resetOutput();
-        setCheck('checkColumns','Missing '+missing.join(', '),'err');
+        // reset output values but preserve the upload check we just set
+        latestSummary=null;
+        ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','sOffered','sVoice','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast'].forEach(id=>{ document.getElementById(id).textContent='-'; });
+        document.getElementById('message').value='Upload Interactions.csv to generate the SLA update.';
+        setCheck('checkColumns','Missing: '+missing.join(', '),'err');
         setCheck('checkDates','Blocked','err');
         setStatus('Missing required columns: '+missing.join(', '),'err');
         setBadge('Error');
@@ -414,7 +598,10 @@
       const mappedRows=parsedRows.map(r=>({...r,_dt:parseDate(cell(r,'date'))}));
       const rows=mappedRows.filter(r=>r._dt);
       if(!rows.length){
-        resetOutput();
+        // reset output values but preserve the upload check we already set
+        latestSummary=null;
+        ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','sOffered','sVoice','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast'].forEach(id=>{ document.getElementById(id).textContent='-'; });
+        document.getElementById('message').value='Upload Interactions.csv to generate the SLA update.';
         setCheck('checkDates','Could not parse','err');
         setStatus('Date column could not be parsed.','err');
         setBadge('Error');
@@ -476,13 +663,13 @@
 
       latestSummary={latest,today:t,mtd:m,rows:rows.length,skippedDates};
       setBadge(rows.length.toLocaleString()+' rows');
-      setStatus('Calculated successfully for '+dateLabel(latest)+'.','ok');
+      setStatus('ready — '+dateLabel(latest)+'.','ok');
     }
 
     async function handleFile(file){
       if(!file) return;
       document.getElementById('fileName').textContent=file.name;
-      setStatus('Reading file...');
+      setStatus('reading…');
       setBadge('Loading');
       setCheck('checkUpload','Reading');
       setCheck('checkColumns','Checking');
@@ -514,14 +701,14 @@
 
     document.getElementById('copyBtn').addEventListener('click', async ()=>{
       const text=document.getElementById('message').value;
-      if(!text || text.startsWith('Upload')){ setStatus('Upload CSV before copying.','err'); return; }
-      try{ await navigator.clipboard.writeText(text); setStatus('Message copied to clipboard.','ok'); }
-      catch{ const ta=document.getElementById('message'); ta.select(); document.execCommand('copy'); setStatus('Message copied to clipboard.','ok'); }
+      if(!latestSummary){ setStatus('Upload CSV before copying.','err'); return; }
+      try{ await navigator.clipboard.writeText(text); setStatus('copied.','ok'); }
+      catch{ const ta=document.getElementById('message'); ta.select(); document.execCommand('copy'); setStatus('copied.','ok'); }
     });
 
     document.getElementById('downloadBtn').addEventListener('click', ()=>{
       const text=document.getElementById('message').value;
-      if(!text || text.startsWith('Upload')){ setStatus('Upload CSV before downloading.','err'); return; }
+      if(!latestSummary){ setStatus('Upload CSV before downloading.','err'); return; }
       downloadText('SLA_Update.txt',text);
     });
 
