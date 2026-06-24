@@ -6,150 +6,213 @@
   <title>SLA Pulse | SLA Update Generator</title>
   <style>
     :root{
-      --teal:#123C3A;
-      --teal-dark:#082B29;
-      --amber:#DDA15E;
-      --cream:#FBF8F1;
-      --sage:#E9F3EF;
-      --sage-light:#F8FCFA;
-      --white:#FFFFFF;
-      --ink:#123C3A;
-      --muted:#667A77;
-      --line:#D7E4E0;
-      --success:#0D7A4F;
+      --nav:#252A31;
+      --nav-2:#171B21;
+      --accent:#2563EB;
+      --accent-2:#38BDF8;
+      --gold:#B45309;
+      --bg:#FFFFFF;
+      --surface:#FFFFFF;
+      --surface-2:#F9FAFB;
+      --ink:#1F2937;
+      --muted:#64748B;
+      --line:#E1E6ED;
+      --line-strong:#CBD5E1;
+      --success:#107C41;
       --error:#B42318;
-      --shadow:0 12px 28px rgba(18,60,58,.11);
+      --shadow:0 10px 22px rgba(31,41,55,.06);
     }
     *{box-sizing:border-box}
     html,body{
       height:100%;width:100%;margin:0;overflow:hidden;
       font-family:"Segoe UI",Arial,sans-serif;
-      background:var(--cream);color:var(--ink);
+      background:var(--bg);color:var(--ink);
     }
+    button,input,textarea{font:inherit}
     .app{
       height:100vh;width:100vw;padding:14px;
-      display:grid;grid-template-columns:292px minmax(0,1fr);
+      display:grid;grid-template-columns:286px minmax(0,1fr);
       gap:14px;overflow:hidden;
     }
-    
-    /* Sidebar */
+
     .rail{
       min-width:0;min-height:0;
-      background:linear-gradient(180deg,var(--teal),var(--teal-dark));
-      border-radius:24px;color:#fff;padding:18px;
+      background:linear-gradient(180deg,var(--nav),var(--nav-2));
+      color:#fff;border-radius:14px;padding:18px;
       display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;
-      gap:12px;box-shadow:var(--shadow);overflow:hidden;
+      gap:14px;box-shadow:var(--shadow);overflow:hidden;
     }
     .brand{display:flex;align-items:center;gap:12px;min-width:0}
     .logo{
-      width:42px;height:42px;border-radius:13px;background:var(--amber);
-      color:var(--teal);display:grid;place-items:center;
-      font-weight:900;font-size:18px;letter-spacing:-.6px;flex:0 0 auto;
+      width:42px;height:42px;border-radius:10px;
+      background:#F8FAFC;color:var(--nav);
+      display:grid;place-items:center;position:relative;flex:0 0 auto;
+      font-weight:900;font-size:14px;letter-spacing:.04em;
+      box-shadow:inset 0 -3px 0 rgba(37,99,235,.18);
+    }
+    .logo:after{
+      content:"";position:absolute;right:7px;bottom:7px;
+      width:8px;height:8px;border-radius:50%;background:var(--accent);
     }
     .brand-title{min-width:0}
-    .brand-title h1{margin:0;font-size:18px;line-height:1.08;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .brand-title p{margin:4px 0 0;color:#D9EAE6;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .notice{
-      border-radius:16px;border:1px solid rgba(255,255,255,.15);
-      background:rgba(255,255,255,.08);padding:12px;
-      font-size:12px;line-height:1.35;color:#E4F0ED;
-    }
-    .notice .tag{
-      display:inline-block;background:rgba(221,161,94,.18);
-      border:1px solid rgba(221,161,94,.35);color:#FFE2B6;
-      border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;
-      letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px;
+    .brand-title h1{margin:0;font-size:19px;line-height:1.05;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .brand-title p{margin:5px 0 0;color:#C5CEDA;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .scope-chip{
+      width:max-content;border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);color:#E2E8F0;
+      border-radius:999px;padding:7px 10px;font-size:11px;
+      font-weight:800;letter-spacing:.06em;text-transform:uppercase;
     }
     .side-metrics{min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;overflow:hidden}
     .side-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
     .side-head h2{margin:0;font-size:14px;color:#fff}
     .side-head span{
-      background:rgba(221,161,94,.16);border:1px solid rgba(221,161,94,.35);
-      color:#FFE2B6;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;
+      background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.34);
+      color:#D7F4FF;border-radius:999px;padding:4px 8px;font-size:10px;font-weight:900;
     }
     .metric-list{min-height:0;display:grid;grid-template-rows:repeat(8,minmax(0,1fr));gap:8px;overflow:hidden}
     .side-card{
       display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;
-      background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.13);
-      border-radius:14px;padding:8px 10px;min-width:0;min-height:0;
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+      border-radius:10px;padding:8px 10px;min-width:0;min-height:0;
     }
-    .side-card label{font-size:11px;color:#D8EBE7;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .side-card label{font-size:11px;color:#CBD5E1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .side-card strong{font-size:14px;color:#fff;white-space:nowrap}
-    .side-card.accent{background:rgba(221,161,94,.13);border-color:rgba(221,161,94,.38)}
-    .credit{border-top:1px solid rgba(255,255,255,.14);padding-top:11px;color:#D8EBE7;font-size:11px;line-height:1.35}
+    .side-card.accent{background:rgba(37,99,235,.12);border-color:rgba(96,165,250,.32)}
+    .credit{border-top:1px solid rgba(255,255,255,.14);padding-top:12px;color:#C5CEDA;font-size:11px;line-height:1.35}
     .credit b{display:block;color:#fff;font-size:12px;margin-top:2px}
 
-    /* Main */
-    .main{min-width:0;min-height:0;display:grid;grid-template-rows:86px minmax(0,1fr);gap:12px;overflow:hidden}
+    .main{
+      min-width:0;min-height:0;display:grid;
+      grid-template-rows:106px minmax(0,1fr);gap:14px;overflow:hidden;
+    }
     .header{
-      min-width:0;background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.96);
-      border-radius:24px;box-shadow:var(--shadow);display:grid;
-      grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;
-      padding:15px 18px;overflow:hidden;
+      min-width:0;background:var(--surface);border:1px solid var(--line);
+      border-radius:12px;box-shadow:0 1px 2px rgba(31,41,55,.06);
+      display:grid;grid-template-columns:minmax(0,1fr) 390px;align-items:center;gap:18px;
+      padding:14px 18px;overflow:hidden;
     }
-    .header h1{margin:0;font-size:30px;color:var(--teal);line-height:1;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .header p{margin:6px 0 0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .header h1{margin:0;font-size:27px;color:var(--ink);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .header p{margin:7px 0 0;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .upload-box{
-      display:grid;grid-template-columns:auto auto minmax(90px,160px);align-items:center;gap:10px;
-      border:1px solid var(--line);background:#fff;border-radius:17px;padding:10px 12px;
-      min-width:350px;max-width:460px;overflow:hidden;
+      height:76px;display:grid;grid-template-columns:minmax(0,1fr) 150px;
+      grid-template-rows:14px 24px 18px;
+      align-items:start;column-gap:12px;row-gap:3px;
+      border:1px dashed var(--line-strong);background:var(--surface-2);
+      border-radius:12px;padding:10px 12px;cursor:pointer;overflow:hidden;
+      transition:border-color .16s ease, background .16s ease, box-shadow .16s ease;
     }
-    .upload-label{
-      background:var(--sage);border:1px solid var(--line);color:var(--teal);
-      font-size:11px;font-weight:900;border-radius:999px;padding:7px 10px;white-space:nowrap;
+    .upload-box:hover,.upload-box.dragging{
+      border-color:var(--accent);background:#F7FAFF;
+      box-shadow:0 0 0 3px rgba(37,99,235,.1);
+    }
+    .upload-kicker{
+      grid-column:1/2;grid-row:1/2;
+      color:var(--accent);font-size:11px;font-weight:900;
+      line-height:14px;
+      letter-spacing:.06em;text-transform:uppercase;
+    }
+    .upload-title{
+      grid-column:1/2;grid-row:2/3;min-width:0;
+      font-size:18px;line-height:24px;font-weight:850;color:var(--ink);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .file-name{
+      grid-column:1/2;grid-row:3/4;min-width:0;
+      font-size:13px;line-height:18px;color:var(--muted);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     }
     .file-btn{
-      height:30px;border:1px solid var(--teal);border-radius:9px;background:#fff;color:var(--teal);
-      font-size:12px;font-weight:900;padding:0 12px;display:grid;place-items:center;
-      cursor:pointer;white-space:nowrap;
+      grid-column:2/3;grid-row:1/4;align-self:center;
+      height:34px;border:1px solid var(--accent);
+      border-radius:8px;background:#fff;color:var(--accent);
+      font-size:12px;font-weight:850;padding:0 12px;display:grid;place-items:center;
+      white-space:nowrap;
     }
-    .file-btn:hover{background:#F4FAF8}
-    .file-name{min-width:0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     #fileInput{position:absolute;left:-9999px;opacity:0;width:1px;height:1px}
 
-    .workspace{min-height:0;display:grid;grid-template-columns:minmax(405px,.92fr) minmax(430px,1.08fr);gap:12px;overflow:hidden}
+    .workspace{
+      min-height:0;display:grid;
+      grid-template-columns:minmax(420px,.92fr) minmax(470px,1.08fr);
+      gap:14px;overflow:hidden;
+    }
     .panel{
-      background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);
+      background:var(--surface);border:1px solid #E7ECF2;
+      border-radius:10px;box-shadow:none;
       padding:16px;min-width:0;min-height:0;overflow:hidden;
       display:grid;grid-template-rows:auto minmax(0,1fr);
     }
     .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;min-width:0}
-    .panel-head h2{margin:0;font-size:16px;color:var(--teal);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .badge{background:var(--teal);color:#fff;font-weight:900;border-radius:999px;padding:6px 10px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
-    .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:10px;min-height:0;overflow:hidden}
+    .panel-head h2{margin:0;font-size:16px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .badge{
+      background:#EEF5FF;color:var(--accent);border:1px solid #C7DAFF;
+      font-weight:850;border-radius:999px;padding:6px 10px;
+      font-size:11px;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis;
+    }
+    .kpi-panel{grid-template-rows:auto minmax(0,1fr) auto}
+    .kpis{
+      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+      grid-template-rows:repeat(3,minmax(0,1fr));gap:10px;min-height:0;overflow:hidden;
+    }
     .kpi{
-      border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--sage),var(--sage-light));
+      border:1px solid #E7ECF2;border-radius:10px;background:#FFFFFF;
       padding:13px;display:grid;grid-template-rows:auto 1fr auto;min-width:0;min-height:0;overflow:hidden;
     }
     .kpi-label{color:var(--muted);font-size:11px;letter-spacing:.07em;text-transform:uppercase;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .kpi-value{color:var(--teal);font-size:clamp(25px,2.9vw,37px);font-weight:900;line-height:1.05;align-self:center;overflow-wrap:anywhere}
-    #kDate{font-size:clamp(21px,2.25vw,30px);line-height:1.08}
+    .kpi-value{color:var(--ink);font-size:clamp(25px,2.6vw,36px);font-weight:900;line-height:1.05;align-self:center;overflow-wrap:anywhere}
+    #kDate{font-size:clamp(21px,2.15vw,29px);line-height:1.08}
     .kpi-sub{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .validation{
+      margin-top:12px;border-top:1px solid var(--line);
+      padding-top:12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+    }
+    .check{
+      min-width:0;border:1px solid var(--line);background:var(--surface-2);
+      border-radius:10px;padding:9px 10px;
+    }
+    .check span{display:block;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .check strong{display:block;margin-top:4px;color:var(--ink);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .check.ok strong{color:var(--success)}.check.err strong{color:var(--error)}
 
-    .message-panel{grid-template-rows:auto minmax(0,1fr) 52px}
+    .message-panel{grid-template-rows:auto minmax(0,1fr) auto auto}
     textarea{
-      width:100%;height:100%;min-height:0;border:1px solid var(--line);border-radius:18px;
-      background:#FFFCF5;color:#111;padding:16px;
-      font:clamp(13px,1.08vw,15px)/1.48 Consolas,"Courier New",monospace;
+      width:100%;height:100%;min-height:0;border:1px solid var(--line);
+      border-radius:10px;background:#FFFFFF;color:#111827;padding:16px;
+      font:14px/1.52 Consolas,"Courier New",monospace;
       resize:none;outline:none;white-space:pre-wrap;overflow:auto;
     }
-    .actions{display:grid;grid-template-columns:140px 132px minmax(0,1fr);gap:10px;align-items:center;margin-top:10px;overflow:hidden}
-    .btn{height:42px;border:0;border-radius:14px;background:var(--teal);color:#fff;font-size:13px;font-weight:900;cursor:pointer}
-    .btn.secondary{background:#fff;color:var(--teal);border:1px solid var(--teal)}
-    .btn:hover{filter:brightness(1.06)}
+    .rules{
+      margin-top:10px;border:1px solid var(--line);border-radius:10px;
+      background:var(--surface-2);padding:9px 11px;color:var(--muted);
+      font-size:12px;
+    }
+    .rules summary{cursor:pointer;color:var(--ink);font-weight:850}
+    .rules div{margin-top:8px;display:grid;gap:4px}
+    .actions{
+      display:grid;grid-template-columns:130px 130px 150px minmax(0,1fr);
+      gap:10px;align-items:center;margin-top:10px;overflow:hidden;
+    }
+    .btn{
+      height:40px;border:0;border-radius:9px;background:var(--accent);
+      color:#fff;font-size:13px;font-weight:850;cursor:pointer;
+    }
+    .btn.secondary{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+    .btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line-strong)}
+    .btn:hover{filter:brightness(1.04)}
     .status{text-align:right;min-width:0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .status.ok{color:var(--success);font-weight:800}.status.err{color:var(--error);font-weight:800}
 
     @media(max-width:1180px){
       .app{grid-template-columns:270px 1fr;padding:10px;gap:10px}.rail{padding:14px}
-      .header{grid-template-columns:1fr}.upload-box{min-width:0;width:100%;max-width:none}
+      .header{grid-template-columns:1fr}.upload-box{width:100%}
       .workspace{grid-template-columns:1fr 1fr}.actions{grid-template-columns:1fr 1fr}.status{display:none}
     }
     @media(max-width:930px){
       html,body{overflow:auto}.app{height:auto;min-height:100vh;overflow:visible;grid-template-columns:1fr}
       .main{grid-template-rows:auto auto;overflow:visible}.workspace{grid-template-columns:1fr;overflow:visible}
-      .panel{min-height:360px}.message-panel{min-height:400px}.kpis{min-height:440px}
+      .panel{min-height:360px}.message-panel{min-height:420px}.kpis{min-height:440px}
       .metric-list{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none}
+      .validation{grid-template-columns:1fr}.actions{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -157,16 +220,13 @@
   <main class="app">
     <aside class="rail" aria-label="Application information">
       <div class="brand">
-        <div class="logo">Pulse</div>
+        <div class="logo">SLA</div>
         <div class="brand-title">
           <h1>SLA Pulse</h1>
-          <p>Operational SLA Update Utility</p>
+          <p>Team reporting utility</p>
         </div>
       </div>
-      <section class="notice">
-        <span class="tag">Internal Use</span><br>
-        Upload the standard Interactions CSV. Output is calculated locally and formatted for operational sharing.
-      </section>
+      <div class="scope-chip">Internal Use</div>
       <section class="side-metrics">
         <div class="side-head"><h2>Operational Breakdown</h2><span>MTD</span></div>
         <div class="metric-list">
@@ -189,18 +249,19 @@
       <header class="header">
         <div>
           <h1>SLA Pulse Update Generator</h1>
-          <p>Upload the latest Interactions.csv file to generate a ready-to-share SLA update.</p>
+          <p>Generate a clean, copy-ready SLA update from the latest Interactions CSV.</p>
         </div>
-        <div class="upload-box">
-          <span class="upload-label">CSV Upload</span>
-          <label class="file-btn" for="fileInput">Choose CSV</label>
-          <div class="file-name" id="fileName">No file selected</div>
+        <label class="upload-box" id="uploadBox" for="fileInput">
+          <span class="upload-kicker">CSV Upload</span>
+          <span class="file-btn">Choose File</span>
+          <strong class="upload-title">Drop Interactions.csv here</strong>
+          <span class="file-name" id="fileName">No file selected</span>
           <input id="fileInput" type="file" accept=".csv,text/csv" aria-label="Upload Interactions CSV" />
-        </div>
+        </label>
       </header>
-      
+
       <section class="workspace">
-        <section class="panel">
+        <section class="panel kpi-panel">
           <div class="panel-head">
             <h2>Live KPI Summary</h2>
             <span class="badge" id="rowsBadge">Waiting</span>
@@ -209,21 +270,35 @@
             <article class="kpi"><div class="kpi-label">Report Date</div><div class="kpi-value" id="kDate">-</div><div class="kpi-sub">Latest date in CSV</div></article>
             <article class="kpi"><div class="kpi-label">Volume Today</div><div class="kpi-value" id="kVol">-</div><div class="kpi-sub">Total records today</div></article>
             <article class="kpi"><div class="kpi-label">Call GOS Today</div><div class="kpi-value" id="kGosToday">-</div><div class="kpi-sub">Handled in SLA / handled</div></article>
-            <article class="kpi"><div class="kpi-label">Call GOS MTD</div><div class="kpi-value" id="kGosMtd">-</div><div class="kpi-sub">Month-to-date</div></article>
+            <article class="kpi"><div class="kpi-label">Call GOS MTD</div><div class="kpi-value" id="kGosMtd">-</div><div class="kpi-sub">Month to date</div></article>
             <article class="kpi"><div class="kpi-label">Abandon Today</div><div class="kpi-value" id="kAbToday">-</div><div class="kpi-sub">Excluding fast abandons</div></article>
             <article class="kpi"><div class="kpi-label">Abandon MTD</div><div class="kpi-value" id="kAbMtd">-</div><div class="kpi-sub">Abandon excl. fast / offered</div></article>
           </div>
+          <div class="validation" aria-label="Data validation summary">
+            <div class="check" id="checkUpload"><span>Upload</span><strong>Waiting</strong></div>
+            <div class="check" id="checkColumns"><span>Columns</span><strong>Not checked</strong></div>
+            <div class="check" id="checkDates"><span>Dates</span><strong>Not checked</strong></div>
+          </div>
         </section>
-        
+
         <section class="panel message-panel">
           <div class="panel-head">
             <h2>Copy-ready SLA Update</h2>
             <span class="badge">Final Output</span>
           </div>
           <textarea id="message" readonly>Upload Interactions.csv to generate the SLA update.</textarea>
+          <details class="rules">
+            <summary>Calculation rules</summary>
+            <div>
+              <span>Call GOS = handled voice calls in SLA / handled voice calls.</span>
+              <span>Abandon rate = abandoned voice calls over 20 seconds / total offered records.</span>
+              <span>Today is based on the latest date found in the uploaded CSV.</span>
+            </div>
+          </details>
           <div class="actions">
-            <button class="btn" id="copyBtn">Copy Message</button>
+            <button class="btn" id="copyBtn">Copy</button>
             <button class="btn secondary" id="downloadBtn">Download TXT</button>
+            <button class="btn ghost" id="summaryBtn">Download Summary</button>
             <div class="status" id="status">Status: Idle</div>
           </div>
         </section>
@@ -233,7 +308,15 @@
   <script>
     const ANSWER_SLA_MS = 20000;
     const FAST_ABANDON_MS = 20000;
+    const COLUMN_ALIASES = {
+      date:['Date','Start Date','Conversation Start','Interaction Date','Created Date'],
+      mediaType:['Media Type','Media','Channel','Interaction Type'],
+      abandoned:['Abandoned','Abandon','Was Abandoned','Is Abandoned'],
+      totalQueue:['Total Queue','Queue Time','Queue Time MS','Total Queue Time','Queue Duration','Total Queue (ms)']
+    };
     let parsedRows = [];
+    let activeColumns = {};
+    let latestSummary = null;
 
     function parseCSV(text){
       const rows=[]; let row=[], cur='', inQuotes=false;
@@ -269,41 +352,93 @@
       return new Date(yr, mo-1, day, hr, min);
     }
 
+    function cleanKey(value){ return String(value || '').toLowerCase().replace(/[^a-z0-9]/g,''); }
+    function resolveColumns(row){
+      const keys=Object.keys(row || {});
+      const normalized=keys.map(k=>[k,cleanKey(k)]);
+      return Object.fromEntries(Object.entries(COLUMN_ALIASES).map(([name,aliases])=>{
+        const choices=aliases.map(cleanKey);
+        const match=normalized.find(([,key])=>choices.includes(key));
+        return [name,match ? match[0] : null];
+      }));
+    }
+    function cell(row,name){ return row[activeColumns[name]] ?? ''; }
     function dateKey(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function dateLabel(d){ return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).replace(/ /g,' '); }
     function shortDate(d){ return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}).replace(/ /g,' '); }
     function pct(v){ return isFinite(v) ? (v*100).toFixed(2).replace(/\.00$/,'') + '%' : 'n/a'; }
     function num(v){ const n=Number(String(v??'').replace(/,/g,'')); return isNaN(n)?0:n; }
-    function isVoice(r){ return String(r['Media Type']||'').toLowerCase()==='voice'; }
-    function isCallback(r){ return String(r['Media Type']||'').toLowerCase()==='callback'; }
-    function isHandled(r){ return String(r['Abandoned']||'').toUpperCase()==='NO'; }
-    function isAbandoned(r){ return String(r['Abandoned']||'').toUpperCase()==='YES'; }
+    function isVoice(r){ return String(cell(r,'mediaType')).toLowerCase()==='voice'; }
+    function isCallback(r){ return String(cell(r,'mediaType')).toLowerCase()==='callback'; }
+    function isHandled(r){ return String(cell(r,'abandoned')).toUpperCase()==='NO'; }
+    function isAbandoned(r){ return String(cell(r,'abandoned')).toUpperCase()==='YES'; }
+    function fmt(n){ return Number(n || 0).toLocaleString(); }
     function setStatus(text,type=''){ const s=document.getElementById('status'); s.textContent=text; s.className='status '+type; }
     function setBadge(text){ document.getElementById('rowsBadge').textContent=text; }
-    function fmt(n){ return Number(n || 0).toLocaleString(); }
+    function setCheck(id,text,type=''){
+      const el=document.getElementById(id);
+      el.className='check '+type;
+      el.querySelector('strong').textContent=text;
+    }
+    function resetOutput(){
+      latestSummary=null;
+      ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','sOffered','sVoice','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast'].forEach(id=>{
+        document.getElementById(id).textContent='-';
+      });
+      document.getElementById('message').value='Upload Interactions.csv to generate the SLA update.';
+    }
 
     function calculate(){
-      if(!parsedRows.length){ setStatus('Waiting for CSV upload.'); setBadge('Waiting'); return; }
-      const required=['Date','Media Type','Abandoned','Total Queue'];
-      const missing=required.filter(c=>!(c in parsedRows[0]));
-      if(missing.length){ setStatus('Missing required columns: '+missing.join(', '),'err'); setBadge('Error'); return; }
-      
-      const rows=parsedRows.map(r=>({...r,_dt:parseDate(r['Date'])})).filter(r=>r._dt);
-      if(!rows.length){ setStatus('Date column could not be parsed.','err'); setBadge('Error'); return; }
+      if(!parsedRows.length){
+        resetOutput();
+        setStatus('Waiting for CSV upload.');
+        setBadge('Waiting');
+        setCheck('checkUpload','Waiting');
+        setCheck('checkColumns','Not checked');
+        setCheck('checkDates','Not checked');
+        return;
+      }
+
+      setCheck('checkUpload',`${parsedRows.length.toLocaleString()} rows`,'ok');
+      activeColumns=resolveColumns(parsedRows[0]);
+      const required={date:'Date',mediaType:'Media Type',abandoned:'Abandoned',totalQueue:'Total Queue'};
+      const missing=Object.entries(required).filter(([key])=>!activeColumns[key]).map(([,label])=>label);
+      if(missing.length){
+        resetOutput();
+        setCheck('checkColumns','Missing '+missing.join(', '),'err');
+        setCheck('checkDates','Blocked','err');
+        setStatus('Missing required columns: '+missing.join(', '),'err');
+        setBadge('Error');
+        return;
+      }
+      setCheck('checkColumns','Ready','ok');
+
+      const mappedRows=parsedRows.map(r=>({...r,_dt:parseDate(cell(r,'date'))}));
+      const rows=mappedRows.filter(r=>r._dt);
+      if(!rows.length){
+        resetOutput();
+        setCheck('checkDates','Could not parse','err');
+        setStatus('Date column could not be parsed.','err');
+        setBadge('Error');
+        return;
+      }
+      const skippedDates=mappedRows.length-rows.length;
+      setCheck('checkDates',skippedDates ? `${skippedDates} skipped` : 'Ready',skippedDates ? '' : 'ok');
+
       rows.sort((a,b)=>a._dt-b._dt);
       const latest=rows[rows.length-1]._dt;
       const latestKey=dateKey(latest);
       const todayRows=rows.filter(r=>dateKey(r._dt)===latestKey);
       const mtdRows=rows.filter(r=>r._dt.getFullYear()===latest.getFullYear() && r._dt.getMonth()===latest.getMonth() && r._dt<=new Date(latest.getFullYear(),latest.getMonth(),latest.getDate(),23,59,59));
-      
+
       function calc(all){
         const voice=all.filter(isVoice);
         const callbacks=all.filter(isCallback);
         const handled=voice.filter(isHandled);
-        const handledInSla=handled.filter(r=>num(r['Total Queue'])<=ANSWER_SLA_MS);
-        const handledOutSla=handled.filter(r=>num(r['Total Queue'])>ANSWER_SLA_MS);
-        const fastAbandons=voice.filter(r=>isAbandoned(r) && num(r['Total Queue'])<=FAST_ABANDON_MS);
-        const abandonedExFast=voice.filter(r=>isAbandoned(r) && num(r['Total Queue'])>FAST_ABANDON_MS);
+        const handledInSla=handled.filter(r=>num(cell(r,'totalQueue'))<=ANSWER_SLA_MS);
+        const handledOutSla=handled.filter(r=>num(cell(r,'totalQueue'))>ANSWER_SLA_MS);
+        const fastAbandons=voice.filter(r=>isAbandoned(r) && num(cell(r,'totalQueue'))<=FAST_ABANDON_MS);
+        const abandonExFast=voice.filter(r=>isAbandoned(r) && num(cell(r,'totalQueue'))>FAST_ABANDON_MS);
         return {
           offered:all.length,
           voice:voice.length,
@@ -312,19 +447,18 @@
           handledInSla:handledInSla.length,
           handledOutSla:handledOutSla.length,
           fastAbandons:fastAbandons.length,
-          abandonExFast:abandonedExFast.length,
+          abandonExFast:abandonExFast.length,
           gos:handled.length ? handledInSla.length/handled.length : 0,
-          abandonRate:all.length ? abandonedExFast.length/all.length : 0
+          abandonRate:all.length ? abandonExFast.length/all.length : 0
         };
       }
-      
+
       const t=calc(todayRows), m=calc(mtdRows);
       const now=new Date();
       const ist=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Kolkata'});
       const bst=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/London'});
-      
-      const msg=`SLA Update | ${shortDate(latest)} | ${ist} IST / ${bst} BST\n--------------------------------------------\n• Call GOS Today: ${pct(t.gos)}\n• Call GOS MTD: ${pct(m.gos)}\n• Volume Today: ${fmt(t.offered)}\n• Abandon Today: ${fmt(t.abandonExFast)}\n• Abandon MTD: ${pct(m.abandonRate)}\n--------------------------------------------`;
-      
+      const msg=`SLA Update | ${shortDate(latest)} | ${ist} IST / ${bst} BST\n--------------------------------------------\n- Call GOS Today: ${pct(t.gos)}\n- Call GOS MTD: ${pct(m.gos)}\n- Volume Today: ${fmt(t.offered)}\n- Abandon Today: ${fmt(t.abandonExFast)}\n- Abandon MTD: ${pct(m.abandonRate)}\n--------------------------------------------`;
+
       document.getElementById('kDate').textContent=dateLabel(latest);
       document.getElementById('kVol').textContent=fmt(t.offered);
       document.getElementById('kGosToday').textContent=pct(t.gos);
@@ -332,7 +466,7 @@
       document.getElementById('kAbToday').textContent=fmt(t.abandonExFast);
       document.getElementById('kAbMtd').textContent=pct(m.abandonRate);
       document.getElementById('message').value=msg;
-      
+
       document.getElementById('sOffered').textContent=fmt(m.offered);
       document.getElementById('sVoice').textContent=fmt(m.voice);
       document.getElementById('sCallbacks').textContent=fmt(m.callbacks);
@@ -341,20 +475,43 @@
       document.getElementById('sOutSla').textContent=fmt(m.handledOutSla);
       document.getElementById('sFastAb').textContent=fmt(m.fastAbandons);
       document.getElementById('sAbExFast').textContent=fmt(m.abandonExFast);
-      
+
+      latestSummary={latest,today:t,mtd:m,rows:rows.length,skippedDates};
       setBadge(rows.length.toLocaleString()+' rows');
       setStatus('Calculated successfully for '+dateLabel(latest)+'.','ok');
     }
 
-    document.getElementById('fileInput').addEventListener('change', async e=>{
-      const file=e.target.files[0];
+    async function handleFile(file){
       if(!file) return;
-      const fileNameEl = document.getElementById('fileName');
-      if(fileNameEl) fileNameEl.textContent = file.name;
+      document.getElementById('fileName').textContent=file.name;
       setStatus('Reading file...');
       setBadge('Loading');
+      setCheck('checkUpload','Reading');
+      setCheck('checkColumns','Checking');
+      setCheck('checkDates','Checking');
       parsedRows=parseCSV(await file.text());
       calculate();
+    }
+
+    function downloadText(filename,text,type='text/plain'){
+      const blob=new Blob([text],{type});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    function csvCell(value){ return `"${String(value ?? '').replace(/"/g,'""')}"`; }
+
+    document.getElementById('fileInput').addEventListener('change', e=>handleFile(e.target.files[0]));
+
+    const uploadBox=document.getElementById('uploadBox');
+    uploadBox.addEventListener('dragover', e=>{ e.preventDefault(); uploadBox.classList.add('dragging'); });
+    uploadBox.addEventListener('dragleave', ()=>uploadBox.classList.remove('dragging'));
+    uploadBox.addEventListener('drop', e=>{
+      e.preventDefault();
+      uploadBox.classList.remove('dragging');
+      handleFile(e.dataTransfer.files[0]);
     });
 
     document.getElementById('copyBtn').addEventListener('click', async ()=>{
@@ -367,12 +524,29 @@
     document.getElementById('downloadBtn').addEventListener('click', ()=>{
       const text=document.getElementById('message').value;
       if(!text || text.startsWith('Upload')){ setStatus('Upload CSV before downloading.','err'); return; }
-      const blob=new Blob([text],{type:'text/plain'});
-      const a=document.createElement('a');
-      a.href=URL.createObjectURL(blob);
-      a.download='SLA_Update.txt';
-      a.click();
-      URL.revokeObjectURL(a.href);
+      downloadText('SLA_Update.txt',text);
+    });
+
+    document.getElementById('summaryBtn').addEventListener('click', ()=>{
+      if(!latestSummary){ setStatus('Upload CSV before downloading summary.','err'); return; }
+      const {latest,today,mtd,rows,skippedDates}=latestSummary;
+      const summary=[
+        ['Metric','Today','MTD'].map(csvCell).join(','),
+        ['Report Date',dateLabel(latest),dateLabel(latest)].map(csvCell).join(','),
+        ['Parsed Rows',rows,rows].map(csvCell).join(','),
+        ['Skipped Invalid Dates',skippedDates,skippedDates].map(csvCell).join(','),
+        ['Calls Offered',today.offered,mtd.offered].map(csvCell).join(','),
+        ['Voice Records',today.voice,mtd.voice].map(csvCell).join(','),
+        ['Callbacks',today.callbacks,mtd.callbacks].map(csvCell).join(','),
+        ['Handled Calls',today.handled,mtd.handled].map(csvCell).join(','),
+        ['Handled In SLA',today.handledInSla,mtd.handledInSla].map(csvCell).join(','),
+        ['Handled Out SLA',today.handledOutSla,mtd.handledOutSla].map(csvCell).join(','),
+        ['Fast Abandons',today.fastAbandons,mtd.fastAbandons].map(csvCell).join(','),
+        ['Abandon Excl. Fast',today.abandonExFast,mtd.abandonExFast].map(csvCell).join(','),
+        ['Call GOS',pct(today.gos),pct(mtd.gos)].map(csvCell).join(','),
+        ['Abandon Rate',pct(today.abandonRate),pct(mtd.abandonRate)].map(csvCell).join(',')
+      ].join('\n');
+      downloadText('SLA_Summary.csv',summary,'text/csv');
     });
   </script>
 </body>
