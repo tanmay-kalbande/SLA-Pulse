@@ -359,6 +359,27 @@
     .empty-state{padding:32px 16px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:11px;}
     .empty-state .ei{font-size:28px;margin-bottom:10px;opacity:.4;}
 
+    /* Day Comparator */
+    .comparator-controls{display:flex;align-items:flex-end;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+    .comp-select-group{display:flex;flex-direction:column;gap:4px;}
+    .comp-select-group label{font-size:9px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.07em;text-transform:uppercase;}
+    .comp-select-group select{height:32px;border:1px solid var(--line-strong);border-radius:4px;background:var(--surface-2);color:var(--ink);font-size:11px;font-family:var(--mono);padding:0 8px;outline:none;cursor:pointer;min-width:140px;transition:border-color .13s;}
+    .comp-select-group select:focus{border-color:var(--accent)}
+    .comp-vs{font-size:12px;font-weight:700;color:var(--muted);font-family:var(--mono);padding-bottom:6px;letter-spacing:.1em;}
+    .comp-header{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:8px;margin-bottom:6px;padding:6px 10px;}
+    .comp-day-label{font-size:10px;font-weight:700;font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;text-align:center;}
+    .comp-grid{display:grid;gap:4px;}
+    .comp-metric-row{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:8px;align-items:center;padding:10px 10px;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;transition:border-color .13s;}
+    .comp-metric-row:hover{border-color:var(--line-strong)}
+    .comp-metric-label{font-size:10px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;}
+    .comp-val{font-size:15px;font-weight:700;font-family:var(--mono);color:var(--ink);text-align:center;}
+    .comp-val.a{color:var(--chart-blue)}
+    .comp-val.b{color:var(--chart-teal)}
+    .comp-delta{font-size:11px;font-weight:600;font-family:var(--mono);text-align:center;padding:3px 8px;border-radius:3px;}
+    .comp-delta.improved{color:var(--ok);background:var(--ok-dim)}
+    .comp-delta.declined{color:var(--err);background:var(--err-dim)}
+    .comp-delta.neutral{color:var(--muted);background:var(--surface-2)}
+
     /* ── AGENT DRAWER ── */
     .drawer-overlay{position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .25s;}
     .drawer-overlay.open{opacity:1;pointer-events:all;}
@@ -475,13 +496,9 @@
             <h3>Daily Performance Breakdown</h3>
             <div id="dayTableWrap"><div class="empty-state"><div class="ei">📅</div><p>Upload a CSV on the main screen to load data.</p></div></div>
           </div>
-          <div class="insight-panel">
-            <h3>GOS by Day</h3>
-            <div id="dayGosChart"><div class="empty-state"><div class="ei">📈</div><p>No data yet.</p></div></div>
-          </div>
-          <div class="insight-panel">
-            <h3>Abandon Rate by Day</h3>
-            <div id="dayAbChart"><div class="empty-state"><div class="ei">📉</div><p>No data yet.</p></div></div>
+          <div class="insight-panel full">
+            <h3>Day Comparator</h3>
+            <div id="dayComparatorWrap"><div class="empty-state"><div class="ei">⚖️</div><p>Upload a CSV on the main screen to load data.</p></div></div>
           </div>
         </div>
       </div>
@@ -498,8 +515,8 @@
             <div id="agentHandleChart"><div class="empty-state"><div class="ei">⏱</div><p>No data yet.</p></div></div>
           </div>
           <div class="insight-panel">
-            <h3>Wrap-up Compliance</h3>
-            <div id="agentWrapChart"><div class="empty-state"><div class="ei">✅</div><p>No data yet.</p></div></div>
+            <h3>SLA Compliance by Agent</h3>
+            <div id="agentSlaChart"><div class="empty-state"><div class="ei">🎯</div><p>No data yet.</p></div></div>
           </div>
         </div>
       </div>
@@ -645,7 +662,8 @@
     // ── CONSTANTS ──
     const ANSWER_SLA_MS = 20000;
     const FAST_ABANDON_MS = 20000;
-    const PASSWORD = 'Tanmay';
+    const PASSWORD_HASH = 'ce89bb1424d8f4872f1b3786c44077396cabd1872e5b784b46e62afe8150af44'; // sha-256 salted
+    const _s = 'slapulse_x7KmQ9vR2pL4wN8jT3bZ6qY';
     const COLUMN_ALIASES = {
       date:['Date','Start Date','Conversation Start','Interaction Date','Created Date'],
       mediaType:['Media Type','Media','Channel','Interaction Type'],
@@ -795,8 +813,13 @@
     pwInput.addEventListener('keydown', e=>{ if(e.key==='Enter') attemptUnlock(); });
     document.getElementById('modalUnlock').addEventListener('click', attemptUnlock);
 
-    function attemptUnlock(){
-      if(pwInput.value === PASSWORD){
+    async function sha256(str){
+      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str + _s));
+      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+    async function attemptUnlock(){
+      const hash = await sha256(pwInput.value);
+      if(hash === PASSWORD_HASH){
         closeModal();
         openAnalytics();
       } else {
@@ -840,8 +863,7 @@
       const avgH = a.handleMs.length ? a.handleMs.reduce((s,v)=>s+v,0)/a.handleMs.length : 0;
       const avgHo = a.holdMs.length ? a.holdMs.reduce((s,v)=>s+v,0)/a.holdMs.length : 0;
       const eff = a.total ? a.handled/a.total : 0;
-      const timeoutRate = a.total ? a.timeout/a.total : 0;
-      const wrapTotal = a.wrapOk+a.timeout+a.wrapMissing;
+      const slaRate = a.handled ? a.handledInSla/a.handled : 0;
 
       document.getElementById('drawerAgentName').textContent = name;
       document.getElementById('drawerAgentSub').textContent = a.total+' interactions · filtered range';
@@ -851,8 +873,8 @@
         {label:'Handled',value:a.handled,sub:pct(eff)+' eff.'},
         {label:'Avg Handle',value:avgH?fmtSec(avgH):'-',sub:'per call'},
         {label:'Avg Hold',value:avgHo?fmtSec(avgHo):'-',sub:'per call'},
-        {label:'Timeout',value:pct(timeoutRate),sub:'of calls'},
-        {label:'Wrap OK',value:wrapTotal?Math.round(a.wrapOk/wrapTotal*100)+'%':'-',sub:'compliance'},
+        {label:'SLA %',value:pct(slaRate),sub:'in SLA'},
+        {label:'In SLA',value:a.handledInSla,sub:'of '+a.handled+' handled'},
       ].map(k=>`<div class="drawer-kpi"><div class="drawer-kpi-label">${k.label}</div><div class="drawer-kpi-value">${k.value}</div><div class="drawer-kpi-sub">${k.sub}</div></div>`).join('');
 
       // Body
@@ -862,19 +884,18 @@
       const dayAgentMap = {};
       a.rows.forEach(r=>{
         const k=dateKey(r._dt);
-        if(!dayAgentMap[k]) dayAgentMap[k]={dt:r._dt,total:0,handled:0,timeout:0};
+        if(!dayAgentMap[k]) dayAgentMap[k]={dt:r._dt,total:0,handled:0};
         dayAgentMap[k].total++;
         if(isHandled(r)) dayAgentMap[k].handled++;
-        if(String(cell(r,'wrapup')||'').trim()==='ININ-WRAP-UP-TIMEOUT') dayAgentMap[k].timeout++;
       });
       const dayEntries = Object.entries(dayAgentMap).sort((a,b)=>a[0]<b[0]?-1:1);
       if(dayEntries.length){
         body += `<div class="drawer-section"><h4>Daily Activity</h4>
-          <table class="day-table"><thead><tr><th>Date</th><th>Calls</th><th>Handled</th><th>Efficiency</th><th>Timeouts</th></tr></thead><tbody>`;
+          <table class="day-table"><thead><tr><th>Date</th><th>Calls</th><th>Handled</th><th>Efficiency</th></tr></thead><tbody>`;
         dayEntries.forEach(([k,d])=>{
           const e2=d.total?d.handled/d.total:0;
           const ec=e2>0.8?'ok':e2>0.5?'warn':'err';
-          body+=`<tr><td style="font-weight:600;color:var(--ink)">${dayLabel(d.dt)}</td><td>${d.total}</td><td>${d.handled}</td><td><span class="pill ${ec}">${pct(e2)}</span></td><td>${d.timeout}</td></tr>`;
+          body+=`<tr><td style="font-weight:600;color:var(--ink)">${dayLabel(d.dt)}</td><td>${d.total}</td><td>${d.handled}</td><td><span class="pill ${ec}">${pct(e2)}</span></td></tr>`;
         });
         body += '</tbody></table></div>';
       }
@@ -892,26 +913,6 @@
           body+=`<div class="bar-row"><div class="bar-label" title="${escHtml(qn)}">${escHtml(shortQ)}</div><div class="bar-track"><div class="bar-fill" style="width:${w.toFixed(0)}%;background:${MULTI[i%MULTI.length]}"></div></div><div class="bar-val">${count}</div></div>`;
         });
         body += '</div>';
-      }
-
-      // Wrapup
-      if(wrapTotal>0){
-        const okW=(a.wrapOk/wrapTotal*100).toFixed(1);
-        const toW=(a.timeout/wrapTotal*100).toFixed(1);
-        const miW=(a.wrapMissing/wrapTotal*100).toFixed(1);
-        body += `<div class="drawer-section"><h4>Wrap-up Detail</h4>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px">
-            <div style="background:var(--ok-dim);border:1px solid rgba(26,122,86,.2);border-radius:5px;padding:8px;text-align:center"><div style="font-size:17px;font-weight:700;color:var(--ok);font-family:var(--mono)">${a.wrapOk}</div><div style="font-size:9px;color:var(--ok);font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Completed</div></div>
-            <div style="background:var(--warn-dim);border:1px solid rgba(180,83,9,.2);border-radius:5px;padding:8px;text-align:center"><div style="font-size:17px;font-weight:700;color:var(--warn);font-family:var(--mono)">${a.timeout}</div><div style="font-size:9px;color:var(--warn);font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Timeout</div></div>
-            <div style="background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:8px;text-align:center"><div style="font-size:17px;font-weight:700;color:var(--muted);font-family:var(--mono)">${a.wrapMissing}</div><div style="font-size:9px;color:var(--muted);font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:2px">Missing</div></div>
-          </div>
-          <div class="wrapup-bar"><div class="wu-ok" style="width:${okW}%"></div><div class="wu-timeout" style="width:${toW}%"></div><div class="wu-missing" style="width:${miW}%"></div></div>
-          <div class="wu-legend">
-            <div class="wu-leg-item"><div class="wu-leg-dot" style="background:${CHART.green}"></div>Completed (${okW}%)</div>
-            <div class="wu-leg-item"><div class="wu-leg-dot" style="background:${CHART.amber}"></div>Timeout (${toW}%)</div>
-            <div class="wu-leg-item"><div class="wu-leg-dot" style="background:var(--line-strong)"></div>Missing (${miW}%)</div>
-          </div>
-        </div>`;
       }
 
       document.getElementById('drawerBody').innerHTML = body;
@@ -1050,30 +1051,59 @@
       });
       tw.innerHTML=html+'</tbody></table>';
 
-      // GOS by day — green=good, amber=warn, red=bad
-      const gosEl=document.getElementById('dayGosChart');
-      let h='';
-      days.forEach(([k,{dt,rows}])=>{
-        const d=calcDay(rows);
-        const w=d.gos!==null?(d.gos*100).toFixed(1):0;
-        const color=d.gos===null?'#BCC2CE':d.gos>=0.8?CHART.green:d.gos>=0.6?CHART.amber:CHART.red;
-        const lbl=dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
-        h+=`<div class="bar-row"><div class="bar-label">${lbl}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div><div class="bar-val">${d.gos!==null?pct(d.gos):'-'}</div></div>`;
-      });
-      gosEl.innerHTML=h||'<div class="empty-state"><p>No data.</p></div>';
-
-      // Abandon by day — red=bad, amber=warn, green=good
-      const days2=days.map(([k,{dt,rows}])=>({dt,d:calcDay(rows)}));
-      const maxAb=Math.max(...days2.map(({d})=>d.abandonRate||0),0.001);
-      const abEl=document.getElementById('dayAbChart');
-      h='';
-      days2.forEach(({dt,d})=>{
-        const w=d.abandonRate!=null?(d.abandonRate/maxAb)*100:0;
-        const color=d.abandonRate===null?'#BCC2CE':d.abandonRate<=0.05?CHART.green:d.abandonRate<=0.1?CHART.amber:CHART.red;
-        const lbl=dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
-        h+=`<div class="bar-row"><div class="bar-label">${lbl}</div><div class="bar-track"><div class="bar-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div><div class="bar-val">${d.abandonRate!=null?pct(d.abandonRate):'-'}</div></div>`;
-      });
-      abEl.innerHTML=h||'<div class="empty-state"><p>No data.</p></div>';
+      // Day Comparator
+      const compEl=document.getElementById('dayComparatorWrap');
+      if(days.length<2){
+        compEl.innerHTML='<div class="empty-state"><div class="ei">\u2696\uFE0F</div><p>Need at least 2 days to compare.</p></div>';
+      } else {
+        const dayCompData=Object.fromEntries(days.map(([k,{dt,rows}])=>[k,{dt,stats:calcDay(rows)}]));
+        const opts=days.map(([k,{dt}])=>`<option value="${k}">${dayLabel(dt)}</option>`).join('');
+        compEl.innerHTML=`<div class="comparator-controls">
+          <div class="comp-select-group"><label>Day A</label><select id="compDayA">${opts}</select></div>
+          <div class="comp-vs">VS</div>
+          <div class="comp-select-group"><label>Day B</label><select id="compDayB">${opts}</select></div>
+          <button class="df-btn" id="compareDays">Compare</button>
+        </div><div id="compResult"></div>`;
+        document.getElementById('compDayB').selectedIndex=days.length-1;
+        function doCompare(){
+          const kA=document.getElementById('compDayA').value;
+          const kB=document.getElementById('compDayB').value;
+          const da=dayCompData[kA], db=dayCompData[kB];
+          if(!da||!db) return;
+          const metrics=[
+            {label:'Offered',vA:da.stats.offered,vB:db.stats.offered,f:v=>fmt(v),hi:'neutral'},
+            {label:'Handled',vA:da.stats.handled,vB:db.stats.handled,f:v=>fmt(v),hi:'good'},
+            {label:'Call GOS',vA:da.stats.gos,vB:db.stats.gos,f:v=>v!==null?pct(v):'-',hi:'good',isP:true},
+            {label:'Abandon Rate',vA:da.stats.abandonRate,vB:db.stats.abandonRate,f:v=>v!==null?pct(v):'-',hi:'bad',isP:true},
+            {label:'Abandon Count',vA:da.stats.abandonExFast,vB:db.stats.abandonExFast,f:v=>fmt(v),hi:'bad'},
+            {label:'Avg Handle',vA:da.stats.avgHandle,vB:db.stats.avgHandle,f:v=>v?fmtSec(v):'-',hi:'neutral'},
+          ];
+          let h=`<div class="comp-header">
+            <div class="comp-metric-label"></div>
+            <div class="comp-day-label" style="color:var(--chart-blue)">${dayLabel(da.dt)}</div>
+            <div class="comp-day-label" style="opacity:.5">DELTA</div>
+            <div class="comp-day-label" style="color:var(--chart-teal)">${dayLabel(db.dt)}</div>
+          </div><div class="comp-grid">`;
+          metrics.forEach(m=>{
+            const delta=(m.vB||0)-(m.vA||0);
+            let ds;
+            if(m.isP) ds=(delta>0?'+':'')+(delta*100).toFixed(2)+'%';
+            else ds=(delta>0?'+':'')+Math.round(delta);
+            let dc=delta===0?'neutral':m.hi==='good'?(delta>0?'improved':'declined'):m.hi==='bad'?(delta>0?'declined':'improved'):'neutral';
+            const ar=delta>0?'\u2191':delta<0?'\u2193':'\u2192';
+            h+=`<div class="comp-metric-row">
+              <div class="comp-metric-label">${m.label}</div>
+              <div class="comp-val a">${m.f(m.vA)}</div>
+              <div class="comp-delta ${dc}">${ar} ${ds}</div>
+              <div class="comp-val b">${m.f(m.vB)}</div>
+            </div>`;
+          });
+          h+='</div>';
+          document.getElementById('compResult').innerHTML=h;
+        }
+        document.getElementById('compareDays').addEventListener('click',doCompare);
+        doCompare();
+      }
     }
 
     // ── AGENT INSIGHTS ──
@@ -1083,11 +1113,12 @@
       soloRows.forEach(r=>{
         const agent=String(cell(r,'users')).trim();
         if(!agent) return;
-        if(!agentMap[agent]) agentMap[agent]={total:0,handled:0,handleMs:[],holdMs:[],timeout:0,wrapOk:0,wrapMissing:0,rows:[]};
+        if(!agentMap[agent]) agentMap[agent]={total:0,handled:0,handledInSla:0,handleMs:[],holdMs:[],timeout:0,wrapOk:0,wrapMissing:0,rows:[]};
         const a=agentMap[agent];
         a.total++; a.rows.push(r);
         if(isHandled(r)){
           a.handled++;
+          if(isVoice(r) && num(cell(r,'totalQueue'))<=ANSWER_SLA_MS) a.handledInSla++;
           const h=num(cell(r,'totalHandle')); if(h>0) a.handleMs.push(h);
           const ho=num(cell(r,'totalHold')); if(ho>0) a.holdMs.push(ho);
         }
@@ -1105,19 +1136,19 @@
       const tw=document.getElementById('agentTableWrap');
       if(!agents.length){ tw.innerHTML='<div class="empty-state"><div class="ei">👤</div><p>No individual agent data found.</p></div>'; }
       else {
-        let html=`<table class="agent-table"><thead><tr><th>Agent</th><th>Calls</th><th>Handled</th><th>Avg Handle</th><th>Avg Hold</th><th>Timeout Rate</th><th>Efficiency</th></tr></thead><tbody>`;
+        let html=`<table class="agent-table"><thead><tr><th>Agent</th><th>Calls</th><th>Handled</th><th>Avg Handle</th><th>Avg Hold</th><th>SLA %</th><th>Efficiency</th></tr></thead><tbody>`;
         agents.forEach(([name,a])=>{
-          const timeoutRate=a.total?a.timeout/a.total:0;
+          const slaR=a.handled?a.handledInSla/a.handled:0;
           const avgH=avgHandle(a);
           const avgHo=a.holdMs.length?a.holdMs.reduce((s,v)=>s+v,0)/a.holdMs.length:0;
           const efficiency=a.total?a.handled/a.total:0;
-          const tClass=timeoutRate>0.5?'err':timeoutRate>0.2?'warn':'ok';
+          const sClass=slaR>=0.8?'ok':slaR>=0.6?'warn':'err';
           const eClass=efficiency>0.8?'ok':efficiency>0.5?'warn':'err';
           html+=`<tr class="clickable-row" onclick="openAgentDrawer('${escHtml(name).replace(/'/g,"\\'")}')">
             <td><span class="agent-name">${escHtml(name)}</span></td>
             <td>${a.total}</td><td>${a.handled}</td>
             <td>${avgH?fmtSec(avgH):'-'}</td><td>${avgHo?fmtSec(avgHo):'-'}</td>
-            <td><span class="pill ${tClass}">${pct(timeoutRate)}</span></td>
+            <td><span class="pill ${sClass}">${pct(slaR)}</span></td>
             <td><span class="pill ${eClass}">${pct(efficiency)}</span></td>
           </tr>`;
         });
@@ -1132,24 +1163,24 @@
         agents.forEach(([name,a],i)=>{
           const avg=avgHandle(a); const w=maxHandle>0?(avg/maxHandle)*100:0;
           const shortName=name.split(' ')[0];
-          h+=`<div class="bar-row"><div class="bar-label clickable" title="${escHtml(name)}" onclick="openAgentDrawer('${escHtml(name).replace(/'/g,"\\'")}'">${escHtml(shortName)}</div><div class="bar-track"><div class="bar-fill" style="width:${w.toFixed(1)}%;background:${MULTI[i%MULTI.length]}"></div></div><div class="bar-val">${avg?fmtSec(avg):'-'}</div></div>`;
+          h+=`<div class="bar-row"><div class="bar-label clickable" title="${escHtml(name)}" onclick="openAgentDrawer('${escHtml(name).replace(/'/g,"\\'")}')">${escHtml(shortName)}</div><div class="bar-track"><div class="bar-fill" style="width:${w.toFixed(1)}%;background:${MULTI[i%MULTI.length]}"></div></div><div class="bar-val">${avg?fmtSec(avg):'-'}</div></div>`;
         });
         hEl.innerHTML=h;
       }
 
-      // Wrap-up — green=ok, amber=timeout, grey=missing
-      const wEl=document.getElementById('agentWrapChart');
-      if(!agents.length){ wEl.innerHTML='<div class="empty-state"><p>No data.</p></div>'; }
+      // SLA Compliance by Agent
+      const slaEl=document.getElementById('agentSlaChart');
+      if(!agents.length){ slaEl.innerHTML='<div class="empty-state"><p>No data.</p></div>'; }
       else {
         let h='';
-        agents.forEach(([name,a])=>{
-          const total=a.wrapOk+a.timeout+a.wrapMissing; if(!total) return;
-          const okW=(a.wrapOk/total*100).toFixed(1), toW=(a.timeout/total*100).toFixed(1), miW=(a.wrapMissing/total*100).toFixed(1);
+        agents.forEach(([name,a],i)=>{
+          const slaR=a.handled?a.handledInSla/a.handled:0;
+          const w=(slaR*100).toFixed(1);
+          const color=slaR>=0.8?CHART.green:slaR>=0.6?CHART.amber:CHART.red;
           const shortName=name.split(' ')[0];
-          h+=`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;font-family:var(--mono);font-weight:600">${escHtml(shortName)}</span><span style="font-size:10px;font-family:var(--mono);color:var(--muted)">${total} calls</span></div><div class="wrapup-bar"><div class="wu-ok" style="width:${okW}%"></div><div class="wu-timeout" style="width:${toW}%"></div><div class="wu-missing" style="width:${miW}%"></div></div></div>`;
+          h+=`<div class="bar-row"><div class="bar-label clickable" title="${escHtml(name)}" onclick="openAgentDrawer('${escHtml(name).replace(/'/g,"\\'")}')">${escHtml(shortName)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div><div class="bar-val">${pct(slaR)}</div></div>`;
         });
-        h+=`<div class="wu-legend"><div class="wu-leg-item"><div class="wu-leg-dot" style="background:${CHART.green}"></div>Completed</div><div class="wu-leg-item"><div class="wu-leg-dot" style="background:${CHART.amber}"></div>Timeout</div><div class="wu-leg-item"><div class="wu-leg-dot" style="background:var(--line-strong)"></div>Missing</div></div>`;
-        wEl.innerHTML=h;
+        slaEl.innerHTML=h;
       }
     }
 
