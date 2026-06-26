@@ -401,23 +401,44 @@
     .drawer-section{margin-bottom:18px;}
     .drawer-section h4{font-size:10px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line);}
 
-    /* ── TODAY NOTICE BANNER ── */
-    .today-notice{
-      display:none;align-items:flex-start;gap:10px;
-      background:rgba(180,83,9,.07);border:1px solid rgba(180,83,9,.25);
-      border-radius:6px;padding:10px 14px;margin-bottom:8px;
-      font-size:12px;line-height:1.55;
+    /* ── TOAST NOTIFICATION ── */
+    #toastContainer{
+      position:fixed;bottom:20px;right:20px;z-index:9999;
+      display:flex;flex-direction:column;gap:10px;
+      pointer-events:none;
     }
-    .today-notice.show{display:flex;}
-    .today-notice .tn-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
-    .today-notice .tn-body{color:var(--ink);}
-    .today-notice .tn-body strong{color:var(--warn);}
-    .today-notice .tn-dismiss{
-      margin-left:auto;flex-shrink:0;background:none;border:none;
-      cursor:pointer;color:var(--muted);font-size:14px;line-height:1;
-      padding:0 2px;opacity:.6;transition:opacity .15s;
+    .toast{
+      pointer-events:all;
+      display:flex;align-items:flex-start;gap:10px;
+      background:#fff;border:1px solid rgba(180,83,9,.3);
+      border-left:4px solid var(--warn);
+      border-radius:8px;padding:12px 14px 14px;
+      box-shadow:0 4px 20px rgba(0,0,0,.12),0 1px 4px rgba(0,0,0,.06);
+      font-size:12px;line-height:1.55;color:var(--ink);
+      max-width:320px;min-width:260px;
+      transform:translateX(120%);opacity:0;
+      transition:transform .3s cubic-bezier(.34,1.3,.64,1),opacity .3s ease;
+      position:relative;overflow:hidden;
     }
-    .today-notice .tn-dismiss:hover{opacity:1;}
+    .toast.show{transform:translateX(0);opacity:1;}
+    .toast.hide{transform:translateX(120%);opacity:0;transition:transform .25s ease,opacity .25s ease;}
+    .toast-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+    .toast-content{flex:1;}
+    .toast-title{font-weight:600;color:var(--warn);font-size:11px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px;}
+    .toast-msg{color:var(--ink);}
+    .toast-msg strong{color:var(--warn);}
+    .toast-dismiss{
+      flex-shrink:0;background:none;border:none;cursor:pointer;
+      color:var(--muted);font-size:13px;line-height:1;
+      padding:0 2px;opacity:.5;transition:opacity .15s;margin-top:1px;
+    }
+    .toast-dismiss:hover{opacity:1;}
+    .toast-bar{
+      position:absolute;bottom:0;left:0;height:3px;
+      background:var(--warn);opacity:.35;
+      animation:toastBar 6s linear forwards;
+    }
+    @keyframes toastBar{from{width:100%}to{width:0%}}
 
     /* ── RESPONSIVE ── */
     @media(max-width:1180px){
@@ -656,11 +677,6 @@
             <h2>Generated Output</h2>
             <span class="badge">Output</span>
           </div>
-          <div class="today-notice" id="todayNotice" role="alert" aria-live="polite">
-            <span class="tn-icon">⚠️</span>
-            <span class="tn-body" id="todayNoticeText"></span>
-            <button class="tn-dismiss" id="todayNoticeDismiss" title="Dismiss" aria-label="Dismiss notice">✕</button>
-          </div>
           <textarea id="message" readonly>Upload Interactions.csv to generate the SLA update.</textarea>
           <details class="rules">
             <summary>Calculation rules</summary>
@@ -819,10 +835,38 @@
     document.getElementById('logoBtn').addEventListener('click', openModal);
     document.getElementById('logoBtn').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') openModal(); });
 
-    // ── DISMISS TODAY NOTICE ──
-    document.getElementById('todayNoticeDismiss').addEventListener('click',()=>{
-      document.getElementById('todayNotice').classList.remove('show');
-    });
+    // ── TOAST HELPER ──
+    let _toastTimer=null;
+    function showToast(msg){
+      const container=document.getElementById('toastContainer');
+      // remove any existing toast first
+      const old=container.querySelector('.toast');
+      if(old){ clearTimeout(_toastTimer); old.remove(); }
+      const t=document.createElement('div');
+      t.className='toast';
+      t.setAttribute('role','alert');
+      t.setAttribute('aria-live','assertive');
+      t.innerHTML=`
+        <span class="toast-icon">⚠️</span>
+        <div class="toast-content">
+          <div class="toast-title">No data for today</div>
+          <div class="toast-msg">${msg}</div>
+        </div>
+        <button class="toast-dismiss" title="Dismiss" aria-label="Dismiss">✕</button>
+        <div class="toast-bar"></div>`;
+      container.appendChild(t);
+      // slide in
+      requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+      // dismiss button
+      t.querySelector('.toast-dismiss').addEventListener('click',()=>dismissToast(t));
+      // auto-dismiss after 6s
+      _toastTimer=setTimeout(()=>dismissToast(t),6000);
+    }
+    function dismissToast(t){
+      clearTimeout(_toastTimer);
+      t.classList.add('hide');
+      setTimeout(()=>t.remove(),300);
+    }
 
     function openModal(){
       pwInput.value=''; pwError.classList.remove('show');
@@ -977,16 +1021,13 @@
       const latest=rows[rows.length-1]._dt;
       const latestKey=dateKey(latest);
 
-      // ── TODAY AWARENESS: compare CSV latest date vs real calendar date ──
-      const todayKey=dateKey(new Date());
-      const noticeEl=document.getElementById('todayNotice');
-      const noticeText=document.getElementById('todayNoticeText');
-      if(latestKey!==todayKey){
-        const todayFmt=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-        noticeText.innerHTML=`No calls have been recorded for <strong>today (${todayFmt})</strong>. The report is showing data from the latest available date in your file (<strong>${dateLabel(latest)}</strong>). If today's calls have happened, please download and upload a fresh export.`;
-        noticeEl.classList.add('show');
-      } else {
-        noticeEl.classList.remove('show');
+      // ── TODAY AWARENESS: only alert when CSV is exactly 1 day behind ──
+      const today=new Date(); today.setHours(0,0,0,0);
+      const latestMidnight=new Date(latest); latestMidnight.setHours(0,0,0,0);
+      const diffDays=Math.round((today-latestMidnight)/(1000*60*60*24));
+      if(diffDays===1){
+        const todayFmt=today.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+        showToast(`No calls recorded for <strong>${todayFmt}</strong> yet. Showing data from <strong>${dateLabel(latest)}</strong>. Upload a fresh export once today's calls come in.`);
       }
 
       const todayRows=rows.filter(r=>dateKey(r._dt)===latestKey);
@@ -1031,7 +1072,6 @@
       latestSummary=null; allMappedRows=[];
       ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','sOffered','sVoice','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast'].forEach(id=>document.getElementById(id).textContent='-');
       document.getElementById('message').value='Upload Interactions.csv to generate the SLA update.';
-      document.getElementById('todayNotice').classList.remove('show');
     }
     function resetOutput(){ resetKPIs(); }
 
@@ -1414,5 +1454,9 @@
       downloadText('SLA_Summary.csv',summary,'text/csv');
     });
   </script>
+
+  <!-- ── TOAST CONTAINER ── -->
+  <div id="toastContainer" aria-live="assertive" aria-atomic="false"></div>
+
 </body>
 </html>
