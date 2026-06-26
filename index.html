@@ -638,6 +638,7 @@
           <div class="side-card"><label>Handled Out SLA</label><strong id="sOutSla">-</strong></div>
           <div class="side-card"><label>Fast Abandons</label><strong id="sFastAb">-</strong></div>
           <div class="side-card accent"><label>Abandon Excl. Fast</label><strong id="sAbExFast">-</strong></div>
+          <div class="side-card"><label>Peak Hour</label><strong id="sPeakHour">-</strong></div>
         </div>
       </section>
       <section class="credit">
@@ -1045,7 +1046,30 @@
         const handledOutSla=handled.filter(r=>num(cell(r,'totalQueue'))>ANSWER_SLA_MS);
         const fastAbandons=voice.filter(r=>isAbandoned(r)&&num(cell(r,'totalQueue'))<=FAST_ABANDON_MS);
         const abandonExFast=voice.filter(r=>isAbandoned(r)&&num(cell(r,'totalQueue'))>FAST_ABANDON_MS);
-        return {offered:all.length,voice:voice.length,callbacks:callbacks.length,handled:handled.length,handledInSla:handledInSla.length,handledOutSla:handledOutSla.length,fastAbandons:fastAbandons.length,abandonExFast:abandonExFast.length,gos:handled.length?handledInSla.length/handled.length:0,abandonRate:all.length?abandonExFast.length/all.length:0};
+        
+        let peakHourStr = '-';
+        if (all.length > 0) {
+          const hourCounts = Array(24).fill(0);
+          all.forEach(r => {
+            if (r._dt) {
+              hourCounts[r._dt.getHours()]++;
+            }
+          });
+          let maxCount = 0;
+          let peakHour = 0;
+          for (let h = 0; h < 24; h++) {
+            if (hourCounts[h] > maxCount) {
+              maxCount = hourCounts[h];
+              peakHour = h;
+            }
+          }
+          if (maxCount > 0) {
+            const startHour = String(peakHour).padStart(2, '0');
+            peakHourStr = `${startHour}:00 (${maxCount})`;
+          }
+        }
+
+        return {offered:all.length,voice:voice.length,callbacks:callbacks.length,handled:handled.length,handledInSla:handledInSla.length,handledOutSla:handledOutSla.length,fastAbandons:fastAbandons.length,abandonExFast:abandonExFast.length,gos:handled.length?handledInSla.length/handled.length:0,abandonRate:all.length?abandonExFast.length/all.length:0,peakHour:peakHourStr};
       }
       const t=calc(todayRows),m=calc(mtdRows);
       const now=new Date();
@@ -1066,6 +1090,7 @@
       document.getElementById('sOutSla').textContent=fmt(m.handledOutSla);
       document.getElementById('sFastAb').textContent=fmt(m.fastAbandons);
       document.getElementById('sAbExFast').textContent=fmt(m.abandonExFast);
+      document.getElementById('sPeakHour').textContent=m.peakHour;
       latestSummary={latest,today:t,mtd:m,rows:rows.length,skippedDates};
       analyticsBuilt=false;
       setBadge(rows.length.toLocaleString()+' rows');
@@ -1074,7 +1099,7 @@
 
     function resetKPIs(){
       latestSummary=null; allMappedRows=[];
-      ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','sOffered','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast'].forEach(id=>document.getElementById(id).textContent='-');
+      ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','sOffered','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast','sPeakHour'].forEach(id=>document.getElementById(id).textContent='-');
       document.getElementById('message').value='Upload Interactions.csv to generate the SLA update.';
     }
     function resetOutput(){ resetKPIs(); }
