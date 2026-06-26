@@ -632,7 +632,6 @@
         <div class="side-head"><h2>Operational Breakdown</h2><span>MTD</span></div>
         <div class="metric-list">
           <div class="side-card accent"><label>Calls Offered</label><strong id="sOffered">-</strong></div>
-          <div class="side-card"><label>Voice Records</label><strong id="sVoice">-</strong></div>
           <div class="side-card"><label>Callbacks</label><strong id="sCallbacks">-</strong></div>
           <div class="side-card"><label>Handled Calls</label><strong id="sHandled">-</strong></div>
           <div class="side-card"><label>Handled In SLA</label><strong id="sInSla">-</strong></div>
@@ -1061,7 +1060,6 @@
       document.getElementById('kAbMtd').textContent=pct(m.abandonRate);
       document.getElementById('message').value=msg;
       document.getElementById('sOffered').textContent=fmt(m.offered);
-      document.getElementById('sVoice').textContent=fmt(m.voice);
       document.getElementById('sCallbacks').textContent=fmt(m.callbacks);
       document.getElementById('sHandled').textContent=fmt(m.handled);
       document.getElementById('sInSla').textContent=fmt(m.handledInSla);
@@ -1076,7 +1074,7 @@
 
     function resetKPIs(){
       latestSummary=null; allMappedRows=[];
-      ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','sOffered','sVoice','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast'].forEach(id=>document.getElementById(id).textContent='-');
+      ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','sOffered','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast'].forEach(id=>document.getElementById(id).textContent='-');
       document.getElementById('message').value='Upload Interactions.csv to generate the SLA update.';
     }
     function resetOutput(){ resetKPIs(); }
