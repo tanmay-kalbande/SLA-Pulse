@@ -449,12 +449,6 @@
       transition:opacity .15s,background .15s,color .15s;
     }
     .toast-dismiss:hover{background:rgba(255,255,255,.14);color:#ccc;}
-    .toast-bar{
-      position:absolute;bottom:0;left:0;height:2px;
-      background:linear-gradient(90deg,rgba(180,83,9,.7),rgba(228,168,74,.5));
-      border-radius:0 2px 0 0;
-      animation:toastBar 6s linear forwards;
-    }
     @keyframes toastBar{from{width:100%}to{width:0%}}
 
     /* ── RESPONSIVE ── */
@@ -853,12 +847,11 @@
     document.getElementById('logoBtn').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') openModal(); });
 
     // ── TOAST HELPER ──
-    let _toastTimer=null;
     function showToast(msg){
       const container=document.getElementById('toastContainer');
       // remove any existing toast first
       const old=container.querySelector('.toast');
-      if(old){ clearTimeout(_toastTimer); old.remove(); }
+      if(old) old.remove();
       const t=document.createElement('div');
       t.className='toast';
       t.setAttribute('role','alert');
@@ -869,18 +862,14 @@
           <div class="toast-title">No data for today</div>
           <div class="toast-msg">${msg}</div>
         </div>
-        <button class="toast-dismiss" title="Dismiss" aria-label="Dismiss">✕</button>
-        <div class="toast-bar"></div>`;
+        <button class="toast-dismiss" title="Dismiss" aria-label="Dismiss">✕</button>`;
       container.appendChild(t);
       // slide in
       requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
-      // dismiss button
+      // dismiss button — manual only
       t.querySelector('.toast-dismiss').addEventListener('click',()=>dismissToast(t));
-      // auto-dismiss after 6s
-      _toastTimer=setTimeout(()=>dismissToast(t),6000);
     }
     function dismissToast(t){
-      clearTimeout(_toastTimer);
       t.classList.add('hide');
       setTimeout(()=>t.remove(),300);
     }
