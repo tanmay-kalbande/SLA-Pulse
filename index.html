@@ -1080,13 +1080,17 @@
       const mtdGos = allHandled.length ? allInSla.length / allHandled.length : 0;
       const mtdGosClass = mtdGos >= 0.8 ? 'ok' : mtdGos >= 0.6 ? 'warn' : 'err';
 
+      // Calculate Average Speed of Answer (ASA) for handled calls
+      const waitMs = allHandled.map(r => num(cell(r,'totalQueue'))).filter(v => v >= 0);
+      const avgWait = waitMs.length ? waitMs.reduce((s,v)=>s+v,0)/waitMs.length : 0;
+
       document.getElementById('dayDrawerTitle').textContent = 'Daily GOS Breakdown';
       document.getElementById('dayDrawerSub').textContent = days.length + ' days · Month to Date performance';
       document.getElementById('dayDrawerBack').style.display = 'none'; // Hide back button on daily list page
       document.getElementById('dayDrawerKpis').innerHTML = [
         {label:'Total Days', value:days.length, sub:'in range'},
         {label:'MTD GOS', value:pct(mtdGos), sub:allInSla.length+'/'+allHandled.length},
-        {label:'Voice Calls', value:allVoice.length, sub:'total offered'},
+        {label:'Avg Speed of Answer', value:avgWait ? fmtSec(avgWait) : '-', sub:'ASA for handled'},
         {label:'Handled', value:allHandled.length, sub:'voice calls'},
         {label:'In SLA', value:allInSla.length, sub:'≤ 20s'},
         {label:'Out SLA', value:allHandled.length - allInSla.length, sub:'> 20s'},
@@ -1233,12 +1237,16 @@
       const dayGos = handled.length ? handledInSla.length / handled.length : 0;
       const totalMisses = handledOutSla.length + abandonExFast.length;
 
+      // Calculate Average Speed of Answer (ASA) for daily handled calls
+      const dayWaitMs = handled.map(r => num(cell(r,'totalQueue'))).filter(v => v >= 0);
+      const dayAvgWait = dayWaitMs.length ? dayWaitMs.reduce((s,v)=>s+v,0)/dayWaitMs.length : 0;
+
       document.getElementById('dayDrawerTitle').textContent = dayLabel(d.dt);
       document.getElementById('dayDrawerSub').textContent = rows.length + ' total interactions · intraday deep dive';
 
       const gosClass = dayGos >= 0.8 ? 'ok' : dayGos >= 0.6 ? 'warn' : 'err';
       document.getElementById('dayDrawerKpis').innerHTML = [
-        {label:'Voice Calls', value:voice.length, sub:'offered'},
+        {label:'Avg Speed of Answer', value:dayAvgWait ? fmtSec(dayAvgWait) : '-', sub:'ASA for handled'},
         {label:'Handled', value:handled.length, sub:'calls'},
         {label:'Day GOS', value:pct(dayGos), sub:'in SLA'},
         {label:'In SLA', value:handledInSla.length, sub:'<= 20s'},
