@@ -154,7 +154,10 @@
     /* KPI cards */
     .kpi-panel{grid-template-rows:auto minmax(0,1fr) auto}
     .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:8px;min-height:0;overflow:hidden;}
-    .kpi{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:12px 14px;display:grid;grid-template-rows:auto 1fr auto;min-width:0;min-height:0;overflow:hidden;transition:border-color .15s;position:relative;}
+    .kpi{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:12px 14px;display:grid;grid-template-rows:auto 1fr auto;min-width:0;min-height:0;overflow:hidden;transition:border-color .15s,box-shadow .15s;position:relative;}
+    .kpi.clickable{cursor:pointer;}
+    .kpi.clickable:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+    .kpi.clickable .kpi-sub::after{content:' · click to explore';color:var(--accent);font-weight:600;}
     .kpi-label{color:var(--muted);font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .kpi-value{color:var(--ink);font-size:clamp(22px,2.4vw,33px);font-weight:700;font-family:var(--mono);line-height:1.05;align-self:center;overflow-wrap:anywhere;letter-spacing:-.02em;}
     #kDate{font-size:clamp(17px,1.8vw,24px);line-height:1.1;letter-spacing:0}
@@ -401,6 +404,101 @@
     .drawer-section{margin-bottom:18px;}
     .drawer-section h4{font-size:10px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--line);}
 
+    /* ── DAY DRILLDOWN DRAWER ── */
+    .agent-drawer.day-drawer{width:560px;}
+    .day-table tr.clickable-row{cursor:pointer;transition:background .12s;}
+    .day-table tr.clickable-row:hover{background:rgba(59,130,246,.08);}
+    
+    .drawer-back{
+      background:rgba(255,255,255,.08);
+      border:1.5px solid rgba(255,255,255,.12);
+      border-radius:4px;
+      color:#e8e8e8;
+      font-size:10px;
+      font-weight:600;
+      padding:4px 8px;
+      cursor:pointer;
+      font-family:var(--mono);
+      display:inline-flex;
+      align-items:center;
+      transition:background .13s,border-color .13s;
+      letter-spacing:.03em;
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
+    .drawer-back:hover{
+      background:rgba(255,255,255,.16);
+      border-color:rgba(255,255,255,.24);
+    }
+    
+    .rc-card{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:14px;}
+    .rc-title{font-size:10px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;border-bottom:1px solid var(--line);}
+    .rc-meter-track{height:16px;background:rgba(0,0,0,0.06);border:1px solid var(--line);border-radius:4px;overflow:hidden;display:flex;margin-bottom:10px;}
+    .rc-meter-fill{height:100%;transition:width 0.3s ease;}
+    .rc-legend{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:var(--mono);font-size:11px;}
+    .rc-legend-item{display:flex;align-items:center;gap:6px;background:var(--surface);padding:6px 8px;border-radius:4px;border:1px solid var(--line);}
+    .rc-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
+    .rc-val{margin-left:auto;font-weight:600;color:var(--ink);}
+
+    .hourly-gos-chart{display:flex;align-items:flex-end;gap:4px;height:110px;padding-top:22px;margin-bottom:8px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding-left:8px;padding-right:8px;padding-bottom:6px;}
+    .h-gos-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative;min-width:0;cursor:pointer;}
+    .h-gos-col:hover .h-gos-bar{opacity:.75;transform:scaleY(1.04);transform-origin:bottom;}
+    .h-gos-col.active .h-gos-bar{box-shadow:0 0 0 2px var(--ink);}
+    .h-gos-bar{width:100%;max-width:18px;border-radius:3px 3px 0 0;min-height:4px;transition:height 0.3s ease,opacity .15s,transform .15s;position:relative;}
+    .h-gos-val{position:absolute;top:-16px;font-size:8.5px;font-family:var(--mono);font-weight:600;color:var(--ink);white-space:nowrap;}
+    .h-gos-lbl{font-size:9px;font-family:var(--mono);color:var(--muted);margin-top:4px;}
+
+    .hourly-miss-chart{display:flex;align-items:flex-end;gap:4px;height:110px;padding-top:22px;margin-bottom:8px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding-left:8px;padding-right:8px;padding-bottom:6px;}
+    .h-miss-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative;min-width:0;cursor:pointer;}
+    .h-miss-col:hover .h-miss-stack{opacity:.75;}
+    .h-miss-stack{width:100%;max-width:18px;display:flex;flex-direction:column-reverse;border-radius:3px 3px 0 0;overflow:hidden;transition:opacity .15s;}
+    .h-miss-seg{width:100%;transition:height 0.3s ease;}
+    .h-miss-val{position:absolute;top:-16px;font-size:8.5px;font-family:var(--mono);font-weight:600;color:var(--ink);white-space:nowrap;}
+
+    /* Cumulative Running GOS Chart */
+    .cum-gos-wrap{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:8px;}
+    .cum-gos-svg{width:100%;display:block;}
+    
+    .cum-gos-dot, .mtd-gos-dot {
+      transition: r 0.15s ease, stroke-width 0.15s ease;
+    }
+    circle.cum-gos-dot:hover, circle.mtd-gos-dot:hover {
+      r: 6px;
+      stroke-width: 2.5px;
+    }
+
+    #chartTooltip {
+      position: absolute;
+      display: none;
+      background: rgba(22, 25, 31, 0.92);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e4e6eb;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 11px;
+      z-index: 99999;
+      pointer-events: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      line-height: 1.4;
+    }
+
+    /* Hour Detail Panel */
+    .hour-detail{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:0;margin-bottom:14px;overflow:hidden;max-height:0;opacity:0;transition:max-height .3s ease,opacity .25s ease,padding .25s ease;}
+    .hour-detail.open{max-height:500px;opacity:1;padding:14px;}
+    .hour-detail-title{font-size:12px;font-weight:700;color:var(--ink);font-family:var(--mono);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+    .hour-detail-title .pill{font-size:10px;}
+    .hour-detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;}
+    .hd-stat{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:8px;text-align:center;}
+    .hd-stat-label{font-size:8.5px;color:var(--muted);font-family:var(--mono);font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+    .hd-stat-value{font-size:16px;font-weight:700;color:var(--ink);font-family:var(--mono);margin-top:2px;}
+    .hd-stat-sub{font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+    .hd-narrative{font-size:11px;font-family:var(--mono);line-height:1.5;color:var(--ink);background:var(--surface);padding:10px;border-radius:4px;border:1px solid var(--line);}
+    .hd-narrative .up{color:var(--ok);font-weight:600;}
+    .hd-narrative .down{color:var(--err);font-weight:600;}
+    .hd-narrative .flat{color:var(--muted);font-weight:600;}
+
     /* ── TOAST NOTIFICATION ── */
     #toastContainer{
       position:fixed;bottom:20px;right:20px;z-index:9999;
@@ -511,6 +609,18 @@
     <div class="drawer-body" id="drawerBody"></div>
   </div>
 
+  <!-- ── DAY DRILLDOWN DRAWER ── -->
+  <div class="agent-drawer day-drawer" id="dayDrawer">
+    <div class="drawer-header">
+      <button class="drawer-close" id="dayDrawerClose">✕</button>
+      <button class="drawer-back" id="dayDrawerBack" style="display:none;">← Back to Daily List</button>
+      <div class="drawer-agent-name" id="dayDrawerTitle">Date</div>
+      <div class="drawer-agent-sub" id="dayDrawerSub">Daily SLA Trend & Root Cause Breakdown</div>
+      <div class="drawer-kpis" id="dayDrawerKpis"></div>
+    </div>
+    <div class="drawer-body" id="dayDrawerBody"></div>
+  </div>
+
   <!-- ── ANALYTICS OVERLAY ── -->
   <div class="analytics-overlay" id="analyticsOverlay">
     <div class="analytics-topbar">
@@ -543,7 +653,7 @@
       <div class="a-tab-panel active" id="atab-days">
         <div class="insights-grid">
           <div class="insight-panel full">
-            <h3>Daily Performance Breakdown</h3>
+            <h3>Daily Performance Breakdown — click a date to inspect GOS drops</h3>
             <div id="dayTableWrap"><div class="empty-state"><div class="ei">📅</div><p>Upload a CSV on the main screen to load data.</p></div></div>
           </div>
           <div class="insight-panel full">
@@ -672,7 +782,7 @@
             <article class="kpi"><div class="kpi-label">Report Date</div><div class="kpi-value" id="kDate">-</div><div class="kpi-sub">Latest date in CSV</div></article>
             <article class="kpi"><div class="kpi-label">Volume Today</div><div class="kpi-value" id="kVol">-</div><div class="kpi-sub">Total records today</div></article>
             <article class="kpi"><div class="kpi-label">Call GOS Today</div><div class="kpi-value" id="kGosToday">-</div><div class="kpi-sub">Handled in SLA / handled</div></article>
-            <article class="kpi"><div class="kpi-label">Call GOS MTD</div><div class="kpi-value" id="kGosMtd">-</div><div class="kpi-sub">Month to date</div></article>
+            <article class="kpi clickable" id="kpiGosMtd"><div class="kpi-label">Call GOS MTD</div><div class="kpi-value" id="kGosMtd">-</div><div class="kpi-sub">Month to date</div></article>
             <article class="kpi"><div class="kpi-label">Abandon Today</div><div class="kpi-value" id="kAbToday">-</div><div class="kpi-sub">Excluding fast abandons</div></article>
             <article class="kpi"><div class="kpi-label">Abandon MTD</div><div class="kpi-value" id="kAbMtd">-</div><div class="kpi-sub">Abandon excl. fast / offered</div></article>
           </div>
@@ -930,10 +1040,480 @@
 
     // ── AGENT DRAWER ──
     document.getElementById('drawerClose').addEventListener('click', closeDrawer);
-    document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
+    document.getElementById('drawerOverlay').addEventListener('click', ()=>{ closeDrawer(); closeDayDrawer(); });
     function closeDrawer(){
       document.getElementById('agentDrawer').classList.remove('open');
       document.getElementById('drawerOverlay').classList.remove('open');
+    }
+
+    // ── DAY DRILLDOWN DRAWER ──
+    function closeDayDrawer(){
+      document.getElementById('dayDrawer').classList.remove('open');
+      document.getElementById('drawerOverlay').classList.remove('open');
+    }
+    document.getElementById('dayDrawerClose').addEventListener('click', closeDayDrawer);
+    document.getElementById('dayDrawerBack').addEventListener('click', () => {
+      openDailyGosPanel();
+    });
+
+    // ── CLICKABLE GOS MTD KPI → Daily GOS Panel ──
+    document.getElementById('kpiGosMtd').addEventListener('click', openDailyGosPanel);
+
+    function openDailyGosPanel(){
+      if(!allMappedRows.length) return;
+      const rows = allMappedRows;
+      // Group by day
+      const dayMap = {};
+      rows.forEach(r => {
+        const k = dateKey(r._dt);
+        if(!dayMap[k]) dayMap[k] = {dt:r._dt, rows:[]};
+        dayMap[k].rows.push(r);
+      });
+      const days = Object.entries(dayMap).sort((a,b) => a[0] < b[0] ? -1 : 1);
+      // Ensure _dayMap is set for openDayDrawer drill-down
+      window._dayMap = dayMap;
+
+      // Compute MTD totals
+      const allVoice = rows.filter(isVoice);
+      const allHandled = allVoice.filter(isHandled);
+      const allInSla = allHandled.filter(r => num(cell(r,'totalQueue')) <= ANSWER_SLA_MS);
+      const mtdGos = allHandled.length ? allInSla.length / allHandled.length : 0;
+      const mtdGosClass = mtdGos >= 0.8 ? 'ok' : mtdGos >= 0.6 ? 'warn' : 'err';
+
+      document.getElementById('dayDrawerTitle').textContent = 'Daily GOS Breakdown';
+      document.getElementById('dayDrawerSub').textContent = days.length + ' days · Month to Date performance';
+      document.getElementById('dayDrawerBack').style.display = 'none'; // Hide back button on daily list page
+      document.getElementById('dayDrawerKpis').innerHTML = [
+        {label:'Total Days', value:days.length, sub:'in range'},
+        {label:'MTD GOS', value:pct(mtdGos), sub:allInSla.length+'/'+allHandled.length},
+        {label:'Voice Calls', value:allVoice.length, sub:'total offered'},
+        {label:'Handled', value:allHandled.length, sub:'voice calls'},
+        {label:'In SLA', value:allInSla.length, sub:'≤ 20s'},
+        {label:'Out SLA', value:allHandled.length - allInSla.length, sub:'> 20s'},
+      ].map(k => `<div class="drawer-kpi"><div class="drawer-kpi-label">${k.label}</div><div class="drawer-kpi-value">${k.value}</div><div class="drawer-kpi-sub">${k.sub}</div></div>`).join('');
+
+      // Build daily table + mini running GOS
+      let cumH = 0, cumS = 0;
+      let body = `<div class="drawer-section"><h4>Daily Performance — click a date for deep insights</h4>
+        <table class="day-table"><thead><tr>
+          <th>Date</th><th>Offered</th><th>Handled</th><th>Day GOS</th><th>Running GOS</th><th>Δ</th>
+        </tr></thead><tbody>`;
+
+      days.forEach(([k, {dt, rows: dayRows}]) => {
+        const voice = dayRows.filter(isVoice);
+        const handled = voice.filter(isHandled);
+        const inSla = handled.filter(r => num(cell(r,'totalQueue')) <= ANSWER_SLA_MS);
+        const dayGos = handled.length ? inSla.length / handled.length : null;
+        const gosClass = dayGos === null ? 'neutral' : dayGos >= 0.8 ? 'ok' : dayGos >= 0.6 ? 'warn' : 'err';
+
+        const prevRunGos = cumH > 0 ? cumS / cumH : null;
+        cumH += handled.length;
+        cumS += inSla.length;
+        const runGos = cumH > 0 ? cumS / cumH : null;
+        const delta = prevRunGos !== null && runGos !== null ? runGos - prevRunGos : null;
+        const runClass = runGos === null ? 'neutral' : runGos >= 0.8 ? 'ok' : runGos >= 0.6 ? 'warn' : 'err';
+
+        let deltaHtml = '-';
+        if(delta !== null){
+          const arrow = delta > 0.001 ? '↑' : delta < -0.001 ? '↓' : '→';
+          const dClass = delta > 0.001 ? 'ok' : delta < -0.001 ? 'err' : 'neutral';
+          deltaHtml = `<span class="pill ${dClass}">${arrow} ${(delta*100).toFixed(2)}%</span>`;
+        }
+
+        body += `<tr class="clickable-row" onclick="openDayDrawer('${k}', true)">
+          <td style="font-weight:600;color:var(--ink)">${dayLabel(dt)} 🔍</td>
+          <td>${dayRows.length}</td><td>${handled.length}</td>
+          <td><span class="pill ${gosClass}">${dayGos !== null ? pct(dayGos) : '-'}</span></td>
+          <td><span class="pill ${runClass}">${runGos !== null ? pct(runGos) : '-'}</span></td>
+          <td>${deltaHtml}</td>
+        </tr>`;
+      });
+      body += '</tbody></table></div>';
+
+      // Add a mini running GOS SVG chart
+      if(days.length > 1){
+        const svgW = 500, svgH = 110, padL = 38, padR = 14, padT = 18, padB = 24;
+        const chartW = svgW - padL - padR, chartH = svgH - padT - padB;
+        const n = days.length;
+        const xStep = n > 1 ? chartW / (n - 1) : chartW;
+
+        let svgContent = '';
+        // Grid lines
+        [{v:100,l:'100%'},{v:80,l:'80%'},{v:0,l:'0%'}].forEach(g => {
+          const y = padT + chartH - (g.v / 100) * chartH;
+          const dc = g.v === 80 ? CHART.green : 'var(--line)';
+          svgContent += `<line x1="${padL}" y1="${y}" x2="${svgW-padR}" y2="${y}" stroke="${dc}" stroke-width="${g.v===80?'1.5':'0.7'}" stroke-dasharray="${g.v===80?'4,3':'2,4'}" opacity="${g.v===80?'0.6':'0.3'}"/>`;
+          svgContent += `<text x="${padL-6}" y="${y+3}" text-anchor="end" fill="var(--muted)" font-size="8" font-family="var(--mono)">${g.l}</text>`;
+        });
+
+        const labelStep = Math.max(1, Math.ceil(n / 6)); // Target ~6 labels on X axis
+        let polyline = '', cH2 = 0, cS2 = 0;
+        days.forEach(([k, {dt, rows: dayRows}], i) => {
+          const voice = dayRows.filter(isVoice);
+          const handled = voice.filter(isHandled);
+          const inSla = handled.filter(r => num(cell(r,'totalQueue')) <= ANSWER_SLA_MS);
+          cH2 += handled.length; cS2 += inSla.length;
+          const rg = cH2 > 0 ? cS2 / cH2 : 0;
+          const x = padL + (n > 1 ? i * xStep : chartW / 2);
+          const y = padT + chartH - (rg * 100 / 100) * chartH;
+          polyline += `${x},${y} `;
+          
+          const dotClr = rg >= 0.8 ? CHART.green : rg >= 0.6 ? CHART.amber : CHART.red;
+          const dayGosActual = handled.length ? (inSla.length / handled.length) : null;
+          const dayGosText = dayGosActual !== null ? pct(dayGosActual) : 'N/A';
+          const dayGosClr = dayGosActual === null ? 'var(--muted)' : dayGosActual >= 0.8 ? CHART.green : dayGosActual >= 0.6 ? CHART.amber : CHART.red;
+          
+          svgContent += `<circle cx="${x}" cy="${y}" r="3.5" fill="${dotClr}" stroke="#fff" stroke-width="1.5" class="mtd-gos-dot" data-daykey="${k}" data-date="${dayLabel(dt)}" data-gos="${dayGosText}" data-rungos="${pct(rg)}" data-color="${dayGosClr}" style="cursor:pointer;"/>`;
+          
+          // Smart label step to prevent overlaps (removes GOS % text above the dots)
+          const showLabel = (i % labelStep === 0 && (n - 1 - i) >= Math.ceil(labelStep / 2)) || (i === n - 1);
+          if (showLabel) {
+            let align = "middle";
+            let xOffset = 0;
+            if (i === 0) { align = "start"; xOffset = 2; }
+            else if (i === n - 1) { align = "end"; xOffset = -2; }
+            
+            svgContent += `<text x="${x + xOffset}" y="${svgH - 4}" text-anchor="${align}" fill="var(--muted)" font-size="7.5" font-family="var(--mono)">${shortDate(dt)}</text>`;
+          }
+        });
+        svgContent = `<polyline points="${polyline.trim()}" fill="none" stroke="${CHART.blue}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.6"/>` + svgContent;
+
+        body += `<div class="drawer-section"><h4>MTD Running GOS Trend</h4>
+        <div class="cum-gos-wrap"><svg class="cum-gos-svg" viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="xMidYMid meet">${svgContent}</svg></div></div>`;
+      }
+
+      document.getElementById('dayDrawerBody').innerHTML = body;
+      document.getElementById('dayDrawerBody').scrollTop = 0;
+      
+      // Click & Hover tooltips on daily line dot
+      document.querySelectorAll('.mtd-gos-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+          document.getElementById('chartTooltip').style.display = 'none';
+          openDayDrawer(dot.dataset.daykey, true);
+        });
+        
+        dot.addEventListener('mouseenter', () => {
+          const tt = document.getElementById('chartTooltip');
+          tt.innerHTML = `<div style="font-weight:700;color:#fff;margin-bottom:3px;">${dot.dataset.date}</div>
+                           <div style="font-size:10.5px;margin-bottom:2px;">Day GOS: <strong style="color:${dot.dataset.color}">${dot.dataset.gos}</strong></div>
+                           <div style="font-size:10.5px;opacity:0.85;">MTD GOS: <strong style="color:var(--chart-blue)">${dot.dataset.rungos}</strong></div>`;
+          tt.style.display = 'block';
+        });
+        dot.addEventListener('mousemove', (e) => {
+          const tt = document.getElementById('chartTooltip');
+          tt.style.left = (e.pageX + 12) + 'px';
+          tt.style.top = (e.pageY - 12) + 'px';
+        });
+        dot.addEventListener('mouseleave', () => {
+          document.getElementById('chartTooltip').style.display = 'none';
+        });
+      });
+
+      document.getElementById('dayDrawer').classList.add('open');
+      document.getElementById('drawerOverlay').classList.add('open');
+    }
+
+    function openDayDrawer(dateKey, fromGOSList = false){
+      const d = window._dayMap && window._dayMap[dateKey];
+      if(!d) return;
+      
+      const backBtn = document.getElementById('dayDrawerBack');
+      if (fromGOSList) {
+        backBtn.style.display = 'inline-flex';
+      } else {
+        backBtn.style.display = 'none';
+      }
+      const rows = d.rows;
+      const voice = rows.filter(isVoice);
+      const handled = voice.filter(isHandled);
+      const handledInSla = handled.filter(r=>num(cell(r,'totalQueue'))<=ANSWER_SLA_MS);
+      const handledOutSla = handled.filter(r=>num(cell(r,'totalQueue'))>ANSWER_SLA_MS);
+      const abandonExFast = voice.filter(r=>isAbandoned(r)&&num(cell(r,'totalQueue'))>FAST_ABANDON_MS);
+      const fastAb = voice.filter(r=>isAbandoned(r)&&num(cell(r,'totalQueue'))<=FAST_ABANDON_MS);
+      const dayGos = handled.length ? handledInSla.length / handled.length : 0;
+      const totalMisses = handledOutSla.length + abandonExFast.length;
+
+      document.getElementById('dayDrawerTitle').textContent = dayLabel(d.dt);
+      document.getElementById('dayDrawerSub').textContent = rows.length + ' total interactions · intraday deep dive';
+
+      const gosClass = dayGos >= 0.8 ? 'ok' : dayGos >= 0.6 ? 'warn' : 'err';
+      document.getElementById('dayDrawerKpis').innerHTML = [
+        {label:'Voice Calls', value:voice.length, sub:'offered'},
+        {label:'Handled', value:handled.length, sub:'calls'},
+        {label:'Day GOS', value:pct(dayGos), sub:'in SLA'},
+        {label:'In SLA', value:handledInSla.length, sub:'<= 20s'},
+        {label:'SLA Misses', value:totalMisses, sub:'out SLA'},
+        {label:'Abandons', value:abandonExFast.length, sub:'excl. fast'},
+      ].map(k=>`<div class="drawer-kpi"><div class="drawer-kpi-label">${k.label}</div><div class="drawer-kpi-value">${k.value}</div><div class="drawer-kpi-sub">${k.sub}</div></div>`).join('');
+
+      let body = '';
+
+      // 1. Graphical Root Cause Analysis
+      const ansLatePct = totalMisses > 0 ? ((handledOutSla.length / totalMisses) * 100).toFixed(1) : 0;
+      const abLatePct = totalMisses > 0 ? ((abandonExFast.length / totalMisses) * 100).toFixed(1) : 0;
+
+      let takeaway = '';
+      if(totalMisses === 0) {
+        takeaway = '<span style="color:var(--ok)">🎯 Stellar performance! 100% GOS achieved with zero SLA threshold violations.</span>';
+      } else if(abandonExFast.length > handledOutSla.length) {
+        takeaway = `<span style="color:var(--err)">⚠️ High Abandonment Impact: ${abLatePct}% of SLA drops were caused by customers hanging up (>20s) before reaching an agent.</span>`;
+      } else {
+        takeaway = `<span style="color:var(--warn)">⚠️ Agent Queue Delay: ${ansLatePct}% of SLA drops were answered, but exceeded the 20-second threshold.</span>`;
+      }
+
+      body += `<div class="rc-card">
+        <div class="rc-title"><span>GOS Drop Root Cause Breakdown</span><span class="pill ${gosClass}">${pct(dayGos)} GOS</span></div>
+        <div class="rc-meter-track">
+          <div class="rc-meter-fill" style="width:${ansLatePct}%;background:${CHART.amber}" title="Answered Out SLA: ${handledOutSla.length}"></div>
+          <div class="rc-meter-fill" style="width:${abLatePct}%;background:${CHART.red}" title="Abandoned Out SLA: ${abandonExFast.length}"></div>
+        </div>
+        <div class="rc-legend">
+          <div class="rc-legend-item"><div class="rc-dot" style="background:${CHART.amber}"></div><span>Answered >20s</span><span class="rc-val">${handledOutSla.length} (${ansLatePct}%)</span></div>
+          <div class="rc-legend-item"><div class="rc-dot" style="background:${CHART.red}"></div><span>Abandoned >20s</span><span class="rc-val">${abandonExFast.length} (${abLatePct}%)</span></div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;font-family:var(--mono);line-height:1.4;background:var(--surface);padding:8px 10px;border-radius:4px;border:1px solid var(--line);">${takeaway}</div>
+      </div>`;
+
+      // 2. Hourly stats
+      const hourStats = Array.from({length:24}, (_,h)=>({hour:h, offered:0, handled:0, inSla:0, outSla:0, abExFast:0, fastAb:0}));
+      voice.forEach(r => {
+        if(!r._dt) return;
+        const h = r._dt.getHours();
+        const hs = hourStats[h];
+        hs.offered++;
+        if(isHandled(r)){
+          hs.handled++;
+          if(num(cell(r,'totalQueue')) <= ANSWER_SLA_MS) hs.inSla++;
+          else hs.outSla++;
+        } else if(isAbandoned(r)){
+          if(num(cell(r,'totalQueue')) > FAST_ABANDON_MS) hs.abExFast++;
+          else hs.fastAb++;
+        }
+      });
+
+      const activeHours = hourStats.filter(hs => hs.offered > 0);
+
+      // Build cumulative running stats
+      let cumHandled = 0, cumInSla = 0;
+      const cumPoints = [];
+      activeHours.forEach(hs => {
+        const prevGos = cumHandled > 0 ? cumInSla / cumHandled : null;
+        cumHandled += hs.handled;
+        cumInSla += hs.inSla;
+        const runGos = cumHandled > 0 ? cumInSla / cumHandled : null;
+        cumPoints.push({...hs, cumHandled, cumInSla, runGos, prevGos, delta: prevGos !== null && runGos !== null ? runGos - prevGos : null});
+      });
+
+      if(activeHours.length){
+
+        // ── 2a. Cumulative Running GOS Progression (SVG line chart) ──
+        const svgW = 500, svgH = 140, padL = 38, padR = 14, padT = 22, padB = 24;
+        const chartW = svgW - padL - padR, chartH = svgH - padT - padB;
+        const n = cumPoints.length;
+        const xStep = n > 1 ? chartW / (n - 1) : chartW;
+
+        let svgContent = '';
+        // Grid lines at 80% and 60%
+        const gridLines = [{v:100,l:'100%'},{v:80,l:'80%'},{v:60,l:'60%'},{v:0,l:'0%'}];
+        gridLines.forEach(g => {
+          const y = padT + chartH - (g.v / 100) * chartH;
+          const dashColor = g.v === 80 ? CHART.green : g.v === 60 ? CHART.amber : 'var(--line)';
+          svgContent += `<line x1="${padL}" y1="${y}" x2="${svgW-padR}" y2="${y}" stroke="${dashColor}" stroke-width="${g.v===80||g.v===60?'1.5':'0.7'}" stroke-dasharray="${g.v===80||g.v===60?'4,3':'2,4'}" opacity="${g.v===80||g.v===60?'0.6':'0.3'}"/>`;
+          svgContent += `<text x="${padL-6}" y="${y+3}" text-anchor="end" fill="var(--muted)" font-size="8" font-family="var(--mono)">${g.l}</text>`;
+        });
+
+        const labelStep = Math.max(1, Math.ceil(n / 8)); // Target ~8 labels on X axis
+        // Build polyline points and dots
+        let polyline = '';
+        cumPoints.forEach((cp, i) => {
+          const x = padL + (n > 1 ? i * xStep : chartW / 2);
+          const gosPct = cp.runGos !== null ? cp.runGos * 100 : 0;
+          const y = padT + chartH - (gosPct / 100) * chartH;
+          polyline += `${x},${y} `;
+          
+          const lbl = String(cp.hour).padStart(2,'0');
+          const dotColor = cp.runGos >= 0.8 ? CHART.green : cp.runGos >= 0.6 ? CHART.amber : CHART.red;
+          const hGosVal = cp.handled ? cp.inSla / cp.handled : null;
+          const hGosText = hGosVal !== null ? pct(hGosVal) : 'N/A';
+          const hGosClr = hGosVal === null ? 'var(--muted)' : hGosVal >= 0.8 ? CHART.green : hGosVal >= 0.6 ? CHART.amber : CHART.red;
+          
+          // Dot
+          svgContent += `<circle cx="${x}" cy="${y}" r="4" fill="${dotColor}" stroke="#fff" stroke-width="1.5" class="cum-gos-dot" data-hidx="${i}" data-hour="${lbl}:00" data-gos="${hGosText}" data-rungos="${pct(cp.runGos)}" data-color="${hGosClr}" style="cursor:pointer;"/>`;
+          
+          // Smart label step to prevent overlaps (removes GOS % text above the dots)
+          const showLabel = (i % labelStep === 0 && (n - 1 - i) >= Math.ceil(labelStep / 2)) || (i === n - 1);
+          if (showLabel) {
+            let align = "middle";
+            let xOffset = 0;
+            if (i === 0) { align = "start"; xOffset = 2; }
+            else if (i === n - 1) { align = "end"; xOffset = -2; }
+            
+            // Hour label on x-axis
+            svgContent += `<text x="${x + xOffset}" y="${svgH - 4}" text-anchor="${align}" fill="var(--muted)" font-size="8" font-family="var(--mono)">${lbl}</text>`;
+          }
+          // Delta arrows for drops
+          if(cp.delta !== null && cp.delta < -0.01){
+            svgContent += `<text x="${x}" y="${y + 14}" text-anchor="middle" fill="${CHART.red}" font-size="7" font-weight="600" font-family="var(--mono)">▼${Math.abs(cp.delta*100).toFixed(1)}%</text>`;
+          }
+        });
+        // Polyline path
+        svgContent = `<polyline points="${polyline.trim()}" fill="none" stroke="${CHART.blue}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.6"/>` + svgContent;
+
+        body += `<div class="drawer-section"><h4>Running GOS Progression — How GOS built up through the day</h4>
+        <div class="cum-gos-wrap"><svg class="cum-gos-svg" viewBox="0 0 ${svgW} ${svgH}" preserveAspectRatio="xMidYMid meet">${svgContent}</svg></div>
+        <div style="display:flex;gap:14px;font-size:10px;font-family:var(--mono);color:var(--muted);margin-bottom:4px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:4px"><div class="rc-dot" style="background:${CHART.blue}"></div>Cumulative GOS line</div>
+          <div style="display:flex;align-items:center;gap:4px"><div class="rc-dot" style="background:${CHART.green}"></div>≥ 80% target</div>
+          <div style="display:flex;align-items:center;gap:4px"><div class="rc-dot" style="background:${CHART.amber}"></div>60% warning</div>
+          <div style="display:flex;align-items:center;gap:4px;color:${CHART.red}">▼ = GOS drop</div>
+        </div></div>`;
+
+        // ── 2b. Intraday Hourly GOS Timeline (clickable bars) ──
+        body += `<div class="drawer-section"><h4>Intraday Hourly GOS — click a bar for details</h4>
+        <div class="hourly-gos-chart" id="gosChart">`;
+        activeHours.forEach((hs,i) => {
+          const hGos = hs.handled ? hs.inSla / hs.handled : 0;
+          const heightPct = hs.handled ? Math.max((hGos * 100).toFixed(0), 6) : 0;
+          const color = hs.handled === 0 ? 'var(--line-strong)' : hGos >= 0.8 ? CHART.green : hGos >= 0.6 ? CHART.amber : CHART.red;
+          const lbl = String(hs.hour).padStart(2,'0');
+          body += `<div class="h-gos-col" data-hidx="${i}" title="${lbl}:00 — Click for details">
+            <span class="h-gos-val">${hs.handled?Math.round(hGos*100)+'%':'-'}</span>
+            <div class="h-gos-bar" style="height:${heightPct}%;background:${color}"></div>
+            <span class="h-gos-lbl">${lbl}</span>
+          </div>`;
+        });
+        body += `</div>
+        <div style="display:flex;gap:12px;font-size:10px;font-family:var(--mono);color:var(--muted);margin-bottom:4px">
+          <div style="display:flex;align-items:center;gap:4px"><div class="rc-dot" style="background:${CHART.green}"></div>GOS ≥ 80%</div>
+          <div style="display:flex;align-items:center;gap:4px"><div class="rc-dot" style="background:${CHART.amber}"></div>GOS 60–79%</div>
+          <div style="display:flex;align-items:center;gap:4px"><div class="rc-dot" style="background:${CHART.red}"></div>GOS < 60%</div>
+          <div style="margin-left:auto;font-style:italic">Click any bar ↑</div>
+        </div>
+        <div class="hour-detail" id="hourDetailPanel"></div>
+        </div>`;
+
+        // 3. Hourly SLA Misses Breakdown (Stacked Chart - clickable)
+        const maxMiss = Math.max(...activeHours.map(hs => hs.outSla + hs.abExFast), 1);
+        body += `<div class="drawer-section"><h4>Hourly SLA Misses (Answered vs Abandoned Late)</h4>
+        <div class="hourly-miss-chart" id="missChart">`;
+        activeHours.forEach((hs,i) => {
+          const totalM = hs.outSla + hs.abExFast;
+          const hPct = maxMiss > 0 ? Math.max((totalM / maxMiss) * 80, 0) : 0;
+          const ansH = totalM > 0 ? ((hs.outSla / totalM) * 100).toFixed(0) : 0;
+          const abH = totalM > 0 ? ((hs.abExFast / totalM) * 100).toFixed(0) : 0;
+          const lbl = String(hs.hour).padStart(2,'0');
+          body += `<div class="h-miss-col" data-hidx="${i}" title="${lbl}:00 — Click for details">
+            <span class="h-miss-val">${totalM > 0 ? totalM : ''}</span>
+            <div class="h-miss-stack" style="height:${hPct}%;">
+              ${hs.outSla > 0 ? `<div class="h-miss-seg" style="height:${ansH}%;background:${CHART.amber}"></div>` : ''}
+              ${hs.abExFast > 0 ? `<div class="h-miss-seg" style="height:${abH}%;background:${CHART.red}"></div>` : ''}
+            </div>
+            <span class="h-gos-lbl">${lbl}</span>
+          </div>`;
+        });
+        body += `</div>
+        <div style="display:flex;gap:12px;font-size:10px;font-family:var(--mono);color:var(--muted);margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:4px"><div class="rc-dot" style="background:${CHART.amber}"></div>Answered > 20s</div>
+          <div style="display:flex;align-items:center;gap:4px"><div class="rc-dot" style="background:${CHART.red}"></div>Abandoned > 20s</div>
+        </div></div>`;
+      }
+
+      // Inject HTML then wire up click handlers
+      document.getElementById('dayDrawerBody').innerHTML = body;
+
+      // ── Wire up clickable hour bars ──
+      if(activeHours.length){
+        const detailPanel = document.getElementById('hourDetailPanel');
+        function showHourDetail(idx){
+          const cp = cumPoints[idx];
+          if(!cp) return;
+          const lbl = String(cp.hour).padStart(2,'0');
+          const hGos = cp.handled ? cp.inSla / cp.handled : null;
+          const runGosPct = cp.runGos !== null ? (cp.runGos * 100).toFixed(2) : '-';
+          const hGosPct = hGos !== null ? (hGos * 100).toFixed(2) : '-';
+          const gosClass2 = cp.runGos >= 0.8 ? 'ok' : cp.runGos >= 0.6 ? 'warn' : 'err';
+
+          // Build narrative
+          let narrative = `<strong>${lbl}:00</strong> — `;
+          if(cp.offered === 0){
+            narrative += 'No voice calls this hour.';
+          } else {
+            narrative += `${cp.offered} voice call${cp.offered>1?'s':''} offered. `;
+            if(cp.handled > 0) narrative += `${cp.handled} handled (${cp.inSla} in SLA, ${cp.outSla} out of SLA). `;
+            if(cp.abExFast > 0) narrative += `<span class="down">${cp.abExFast} abandoned after >20s</span>. `;
+            if(cp.fastAb > 0) narrative += `${cp.fastAb} fast abandon${cp.fastAb>1?'s':''} (<20s). `;
+
+            if(cp.delta !== null){
+              if(cp.delta < -0.005){
+                narrative += `<br>↳ Running GOS <span class="down">dropped by ${Math.abs(cp.delta*100).toFixed(2)}%</span> to <strong>${runGosPct}%</strong>.`;
+                if(cp.outSla > 0 && cp.abExFast > 0) narrative += ` Cause: ${cp.outSla} answered late + ${cp.abExFast} abandoned late.`;
+                else if(cp.outSla > 0) narrative += ` Cause: ${cp.outSla} call${cp.outSla>1?'s':''} answered beyond 20s threshold.`;
+                else if(cp.abExFast > 0) narrative += ` Cause: ${cp.abExFast} customer${cp.abExFast>1?'s':''} abandoned after waiting >20s.`;
+              } else if(cp.delta > 0.005){
+                narrative += `<br>↳ Running GOS <span class="up">recovered by +${(cp.delta*100).toFixed(2)}%</span> to <strong>${runGosPct}%</strong>. All ${cp.inSla} handled calls met SLA.`;
+              } else {
+                narrative += `<br>↳ Running GOS <span class="flat">held steady</span> at <strong>${runGosPct}%</strong>.`;
+              }
+            } else {
+              narrative += `<br>↳ Running GOS started at <strong>${runGosPct}%</strong>.`;
+            }
+          }
+
+          detailPanel.innerHTML = `
+            <div class="hour-detail-title"><span>🕐 ${lbl}:00 — Hour Detail</span><span class="pill ${gosClass2}">Running GOS: ${runGosPct}%</span></div>
+            <div class="hour-detail-grid">
+              <div class="hd-stat"><div class="hd-stat-label">Offered</div><div class="hd-stat-value">${cp.offered}</div><div class="hd-stat-sub">this hour</div></div>
+              <div class="hd-stat"><div class="hd-stat-label">In SLA</div><div class="hd-stat-value" style="color:${CHART.green}">${cp.inSla}</div><div class="hd-stat-sub">≤ 20s</div></div>
+              <div class="hd-stat"><div class="hd-stat-label">Out SLA</div><div class="hd-stat-value" style="color:${CHART.amber}">${cp.outSla}</div><div class="hd-stat-sub">> 20s answered</div></div>
+              <div class="hd-stat"><div class="hd-stat-label">Abandoned</div><div class="hd-stat-value" style="color:${CHART.red}">${cp.abExFast}</div><div class="hd-stat-sub">> 20s dropped</div></div>
+              <div class="hd-stat"><div class="hd-stat-label">Hour GOS</div><div class="hd-stat-value">${hGosPct}%</div><div class="hd-stat-sub">this hour only</div></div>
+              <div class="hd-stat"><div class="hd-stat-label">Cumul. GOS</div><div class="hd-stat-value">${runGosPct}%</div><div class="hd-stat-sub">${cp.cumInSla}/${cp.cumHandled} total</div></div>
+            </div>
+            <div class="hd-narrative">${narrative}</div>`;
+          detailPanel.classList.add('open');
+
+          // Highlight active bar
+          document.querySelectorAll('#gosChart .h-gos-col').forEach(c=>c.classList.remove('active'));
+          const activeCol = document.querySelector('#gosChart .h-gos-col[data-hidx="'+idx+'"]');
+          if(activeCol) activeCol.classList.add('active');
+        }
+
+        // Click on GOS bar
+        document.querySelectorAll('#gosChart .h-gos-col').forEach(col=>{
+          col.addEventListener('click', ()=> showHourDetail(+col.dataset.hidx));
+        });
+        // Click on miss bar
+        document.querySelectorAll('#missChart .h-miss-col').forEach(col=>{
+          col.addEventListener('click', ()=> showHourDetail(+col.dataset.hidx));
+        });
+        // Click & Hover tooltips on hourly line dot
+        document.querySelectorAll('.cum-gos-dot').forEach(dot=>{
+          dot.addEventListener('click', ()=> {
+            document.getElementById('chartTooltip').style.display = 'none';
+            showHourDetail(+dot.dataset.hidx);
+          });
+          
+          dot.addEventListener('mouseenter', () => {
+            const tt = document.getElementById('chartTooltip');
+            tt.innerHTML = `<div style="font-weight:700;color:#fff;margin-bottom:3px;">${dot.dataset.hour}</div>
+                             <div style="font-size:10.5px;margin-bottom:2px;">Hour GOS: <strong style="color:${dot.dataset.color}">${dot.dataset.gos}</strong></div>
+                             <div style="font-size:10.5px;opacity:0.85;">Running GOS: <strong style="color:var(--chart-blue)">${dot.dataset.rungos}</strong></div>`;
+            tt.style.display = 'block';
+          });
+          dot.addEventListener('mousemove', (e) => {
+            const tt = document.getElementById('chartTooltip');
+            tt.style.left = (e.pageX + 12) + 'px';
+            tt.style.top = (e.pageY - 12) + 'px';
+          });
+          dot.addEventListener('mouseleave', () => {
+            document.getElementById('chartTooltip').style.display = 'none';
+          });
+        });
+      }
+
+      document.getElementById('dayDrawerBody').scrollTop = 0;
+      document.getElementById('dayDrawer').classList.add('open');
+      document.getElementById('drawerOverlay').classList.add('open');
     }
     function openAgentDrawer(name){
       const a = window._agentMap && window._agentMap[name];
@@ -994,6 +1574,7 @@
       }
 
       document.getElementById('drawerBody').innerHTML = body;
+      document.getElementById('drawerBody').scrollTop = 0;
       document.getElementById('agentDrawer').classList.add('open');
       document.getElementById('drawerOverlay').classList.add('open');
     }
@@ -1141,6 +1722,7 @@
         };
       }
 
+      window._dayMap = dayMap;
       // Table
       const tw=document.getElementById('dayTableWrap');
       let html=`<table class="day-table"><thead><tr>
@@ -1151,8 +1733,8 @@
         const d=calcDay(rows);
         const gosClass=d.gos===null?'neutral':d.gos>=0.8?'ok':d.gos>=0.6?'warn':'err';
         const abClass=d.abandonRate===null?'neutral':d.abandonRate<=0.05?'ok':d.abandonRate<=0.1?'warn':'err';
-        html+=`<tr>
-          <td style="font-weight:600;color:var(--ink)">${dayLabel(dt)}</td>
+        html+=`<tr class="clickable-row" onclick="openDayDrawer('${k}')">
+          <td style="font-weight:600;color:var(--ink)">${dayLabel(dt)} 🔍</td>
           <td>${d.offered}</td><td>${d.handled}</td>
           <td><span class="pill ${gosClass}">${d.gos!==null?pct(d.gos):'-'}</span></td>
           <td><span class="pill ${abClass}">${d.abandonRate!==null?pct(d.abandonRate):'-'}</span></td>
@@ -1483,6 +2065,9 @@
       downloadText('SLA_Summary.csv',summary,'text/csv');
     });
   </script>
+
+  <!-- ── CHART TOOLTIP ── -->
+  <div id="chartTooltip"></div>
 
   <!-- ── TOAST CONTAINER ── -->
   <div id="toastContainer" aria-live="assertive" aria-atomic="false"></div>
