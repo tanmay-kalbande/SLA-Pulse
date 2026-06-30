@@ -461,13 +461,7 @@
     .h-miss-seg{width:100%;transition:height 0.3s ease;}
     .h-miss-val{position:absolute;top:-16px;font-size:8.5px;font-family:var(--mono);font-weight:600;color:var(--ink);white-space:nowrap;}
 
-    /* Daily Active Agents Chart */
-    .agent-calls-chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:22px;margin-bottom:8px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding-left:8px;padding-right:8px;padding-bottom:6px;}
-    .agent-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative;min-width:0;cursor:pointer;}
-    .agent-col:hover .agent-bar{opacity:.75;transform:scaleY(1.04);transform-origin:bottom;}
-    .agent-bar{width:100%;max-width:24px;border-radius:3px 3px 0 0;min-height:4px;transition:height 0.3s ease,opacity .15s,transform .15s;position:relative;}
-    .agent-bar-val{position:absolute;top:-16px;font-size:8.5px;font-family:var(--mono);font-weight:600;color:var(--ink);white-space:nowrap;}
-    .agent-bar-lbl{font-size:9px;font-family:var(--mono);color:var(--muted);margin-top:4px;text-align:center;overflow:hidden;text-overflow:ellipsis;width:100%;white-space:nowrap;}
+
 
     /* Cumulative Running GOS Chart */
     .cum-gos-wrap{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:8px;}
@@ -1351,21 +1345,15 @@
       const sortedAgents = Object.entries(dayAgentCalls).sort((a,b) => b[1] - a[1]);
       
       body += `<div class="drawer-section" style="margin-top:14px;">
-        <h4>Active Agents Today (${sortedAgents.length}) — click a bar to drill down</h4>
-        <div class="agent-calls-chart">`;
+        <h4>Active Agents Today (${sortedAgents.length}) — click a name to drill down</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:10px;">`;
       if (sortedAgents.length === 0) {
-        body += `<div class="empty-state" style="width:100%;"><div class="ei">👤</div><p>No active agents took calls today.</p></div>`;
+        body += `<span style="font-size:11px;color:var(--muted);font-family:var(--mono);">No active agents took calls today.</span>`;
       } else {
-        const maxCalls = sortedAgents[0][1];
-        sortedAgents.forEach(([name, count], idx) => {
-          const heightPct = maxCalls > 0 ? Math.max((count / maxCalls) * 100, 6) : 0;
-          const color = MULTI[idx % MULTI.length];
-          const shortName = getShortName(name);
-          body += `<div class="agent-col" onclick="closeDayDrawer(); openAgentDrawer('${escHtml(name).replace(/'/g, "\\'")}');" title="${escHtml(name)} — ${count} call${count !== 1 ? 's' : ''} — Click to view details">
-            <span class="agent-bar-val">${count}</span>
-            <div class="agent-bar" style="height:${heightPct}%;background:${color}"></div>
-            <span class="agent-bar-lbl">${escHtml(shortName)}</span>
-          </div>`;
+        sortedAgents.forEach(([name, count]) => {
+          body += `<span class="pill neutral clickable-agent-pill" onclick="closeDayDrawer(); openAgentDrawer('${escHtml(name).replace(/'/g, "\\'")}');" style="font-size:11px;font-family:var(--mono);padding:4px 8px;border:1px solid var(--line);border-radius:4px;display:inline-flex;align-items:center;gap:6px;user-select:none;">
+            👤 <strong>${escHtml(name)}</strong>
+          </span>`;
         });
       }
       body += `</div></div>`;
