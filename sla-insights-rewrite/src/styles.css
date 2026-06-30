@@ -67,18 +67,8 @@
       font-family:var(--mono);font-weight:700;font-size:13px;
       letter-spacing:.03em;position:relative;
       border:1px solid rgba(255,255,255,.15);
-      text-decoration:none;cursor:pointer;
-      transition:background .15s,box-shadow .15s,transform .1s;
+      text-decoration:none;
       user-select:none;
-    }
-    .logo:hover{background:#e8ecf0;box-shadow:0 0 0 2px rgba(255,255,255,.15)}
-    .logo:active{transform:scale(0.93)}
-    .logo-hint{
-      position:absolute;bottom:-1px;right:-1px;
-      width:10px;height:10px;border-radius:50%;
-      background:var(--rail-bg);border:1.5px solid rgba(255,255,255,.25);
-      display:flex;align-items:center;justify-content:center;
-      font-size:7px;color:rgba(255,255,255,.5);line-height:1;
     }
     .brand-title{min-width:0}
     .brand-title h1{margin:0;font-size:15px;line-height:1.1;color:#fff;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}

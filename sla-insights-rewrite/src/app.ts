@@ -133,9 +133,6 @@ document.body.innerHTML = appTemplate;
       rebuildAnalytics(allMappedRows);
     });
 
-    // ── ANALYTICS ACCESS ──
-    document.getElementById('logoBtn').addEventListener('click', openAnalytics);
-    document.getElementById('logoBtn').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') openAnalytics(); });
 
     // ── TOAST HELPER ──
     function showToast(msg){
