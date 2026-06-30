@@ -68,10 +68,11 @@
       letter-spacing:.03em;position:relative;
       border:1px solid rgba(255,255,255,.15);
       text-decoration:none;cursor:pointer;
-      transition:background .15s,box-shadow .15s;
+      transition:background .15s,box-shadow .15s,transform .1s;
       user-select:none;
     }
     .logo:hover{background:#e8ecf0;box-shadow:0 0 0 2px rgba(255,255,255,.15)}
+    .logo:active{transform:scale(0.93)}
     .logo-hint{
       position:absolute;bottom:-1px;right:-1px;
       width:10px;height:10px;border-radius:50%;
@@ -223,10 +224,18 @@
     .analytics-overlay{
       position:fixed;inset:0;z-index:50;
       background:var(--bg);
-      display:none;flex-direction:column;gap:0;
+      display:flex;flex-direction:column;gap:0;
       overflow:hidden;
+      opacity:0;
+      pointer-events:none;
+      transform:scale(0.96) translateY(12px);
+      transition:opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .analytics-overlay.open{display:flex}
+    .analytics-overlay.open{
+      opacity:1;
+      pointer-events:all;
+      transform:scale(1) translateY(0);
+    }
 
     .analytics-topbar{
       background:var(--rail-bg);border-bottom:1px solid var(--rail-border);
