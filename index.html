@@ -1224,7 +1224,12 @@
         });
         dot.addEventListener('mousemove', (e) => {
           const tt = document.getElementById('chartTooltip');
-          tt.style.left = (e.pageX + 12) + 'px';
+          const ttWidth = tt.offsetWidth || 180;
+          let left = e.pageX + 12;
+          if (e.clientX + ttWidth + 12 > window.innerWidth) {
+            left = e.pageX - ttWidth - 12;
+          }
+          tt.style.left = left + 'px';
           tt.style.top = (e.pageY - 12) + 'px';
         });
         dot.addEventListener('mouseleave', () => {
@@ -1330,15 +1335,21 @@
       const sortedAgents = Object.entries(dayAgentCalls).sort((a,b) => b[1] - a[1]);
       
       body += `<div class="drawer-section" style="margin-top:14px;">
-        <h4>Active Agents Today (${sortedAgents.length}) — click to view agent performance</h4>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:10px;">`;
+        <h4>Active Agents Today (${sortedAgents.length}) — click a name to drill down</h4>
+        <div style="background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;">`;
       if (sortedAgents.length === 0) {
-        body += `<span style="font-size:11px;color:var(--muted);font-family:var(--mono);">No active agents took calls today.</span>`;
+        body += `<div class="empty-state"><div class="ei">👤</div><p>No active agents took calls today.</p></div>`;
       } else {
-        sortedAgents.forEach(([name, count]) => {
-          body += `<span class="pill neutral clickable-agent-pill" onclick="closeDayDrawer(); setTimeout(() => openAgentDrawer('${escHtml(name).replace(/'/g, "\\'")}'), 150);" style="font-size:11px;font-family:var(--mono);padding:4px 8px;border:1px solid var(--line);border-radius:4px;display:inline-flex;align-items:center;gap:6px;user-select:none;">
-            👤 <strong>${escHtml(name)}</strong> <span style="color:var(--muted);font-size:10px;">(${count} call${count > 1 ? 's' : ''})</span>
-          </span>`;
+        const maxCalls = sortedAgents[0][1];
+        sortedAgents.forEach(([name, count], idx) => {
+          const w = maxCalls > 0 ? (count / maxCalls) * 100 : 0;
+          body += `<div class="bar-row">
+            <div class="bar-label clickable" title="Click to view ${escHtml(name)}'s details" onclick="closeDayDrawer(); setTimeout(() => openAgentDrawer('${escHtml(name).replace(/'/g, "\\'")}'), 150);">${escHtml(name)}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${w.toFixed(1)}%;background:${MULTI[idx % MULTI.length]}"></div>
+            </div>
+            <div class="bar-val" style="font-family:var(--mono);font-size:11px;color:var(--muted);">${count} call${count > 1 ? 's' : ''}</div>
+          </div>`;
         });
       }
       body += `</div></div>`;
@@ -1582,7 +1593,12 @@
           });
           dot.addEventListener('mousemove', (e) => {
             const tt = document.getElementById('chartTooltip');
-            tt.style.left = (e.pageX + 12) + 'px';
+            const ttWidth = tt.offsetWidth || 180;
+            let left = e.pageX + 12;
+            if (e.clientX + ttWidth + 12 > window.innerWidth) {
+              left = e.pageX - ttWidth - 12;
+            }
+            tt.style.left = left + 'px';
             tt.style.top = (e.pageY - 12) + 'px';
           });
           dot.addEventListener('mouseleave', () => {
