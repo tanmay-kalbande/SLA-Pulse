@@ -406,6 +406,10 @@
 
     /* ── DAY DRILLDOWN DRAWER ── */
     .agent-drawer.day-drawer{width:560px;}
+    .agent-drawer.day-drawer .drawer-kpis{grid-template-columns:repeat(4,1fr);}
+    @media(max-width:520px){
+      .drawer-kpis, .agent-drawer.day-drawer .drawer-kpis{grid-template-columns:repeat(2,1fr) !important;}
+    }
     .day-table tr.clickable-row{cursor:pointer;transition:background .12s;}
     .day-table tr.clickable-row:hover{background:rgba(59,130,246,.08);}
     
@@ -1100,7 +1104,7 @@
       let cumH = 0, cumS = 0;
       let body = `<div class="drawer-section"><h4>Daily Performance — click a date for deep insights</h4>
         <table class="day-table"><thead><tr>
-          <th>Date</th><th>Offered</th><th>Handled</th><th>Day GOS</th><th>Running GOS</th><th>Δ</th>
+          <th>Date</th><th>Offered</th><th>Handled</th><th>Day GOS</th><th>Running GOS</th><th>Δ</th><th>Agents</th>
         </tr></thead><tbody>`;
 
       days.forEach(([k, {dt, rows: dayRows}]) => {
@@ -1109,6 +1113,18 @@
         const inSla = handled.filter(r => num(cell(r,'totalQueue')) <= ANSWER_SLA_MS);
         const dayGos = handled.length ? inSla.length / handled.length : null;
         const gosClass = dayGos === null ? 'neutral' : dayGos >= 0.8 ? 'ok' : dayGos >= 0.6 ? 'warn' : 'err';
+
+        // Unique agents who handled voice calls on this day
+        const dayUniqueAgents = new Set();
+        handled.forEach(r => {
+          const uStr = String(cell(r, 'users') || '').trim();
+          if (uStr) {
+            uStr.split(';').forEach(u => {
+              const name = u.trim();
+              if (name) dayUniqueAgents.add(name);
+            });
+          }
+        });
 
         const prevRunGos = cumH > 0 ? cumS / cumH : null;
         cumH += handled.length;
@@ -1130,6 +1146,7 @@
           <td><span class="pill ${gosClass}">${dayGos !== null ? pct(dayGos) : '-'}</span></td>
           <td><span class="pill ${runClass}">${runGos !== null ? pct(runGos) : '-'}</span></td>
           <td>${deltaHtml}</td>
+          <td><strong style="color:var(--chart-indigo)">${dayUniqueAgents.size}</strong></td>
         </tr>`;
       });
       body += '</tbody></table></div>';
@@ -1241,6 +1258,18 @@
       const dayWaitMs = handled.map(r => num(cell(r,'totalQueue'))).filter(v => v >= 0);
       const dayAvgWait = dayWaitMs.length ? dayWaitMs.reduce((s,v)=>s+v,0)/dayWaitMs.length : 0;
 
+      // Unique agents who handled voice calls for the day
+      const dayUniqueAgents = new Set();
+      handled.forEach(r => {
+        const uStr = String(cell(r, 'users') || '').trim();
+        if (uStr) {
+          uStr.split(';').forEach(u => {
+            const name = u.trim();
+            if (name) dayUniqueAgents.add(name);
+          });
+        }
+      });
+
       document.getElementById('dayDrawerTitle').textContent = dayLabel(d.dt);
       document.getElementById('dayDrawerSub').textContent = rows.length + ' total interactions · intraday deep dive';
 
@@ -1252,6 +1281,7 @@
         {label:'In SLA', value:handledInSla.length, sub:'<= 20s'},
         {label:'SLA Misses', value:totalMisses, sub:'out SLA'},
         {label:'Abandons', value:abandonExFast.length, sub:'excl. fast'},
+        {label:'Active Agents', value:dayUniqueAgents.size, sub:'took calls'},
       ].map(k=>`<div class="drawer-kpi"><div class="drawer-kpi-label">${k.label}</div><div class="drawer-kpi-value">${k.value}</div><div class="drawer-kpi-sub">${k.sub}</div></div>`).join('');
 
       let body = '';
@@ -1283,7 +1313,7 @@
       </div>`;
 
       // 2. Hourly stats
-      const hourStats = Array.from({length:24}, (_,h)=>({hour:h, offered:0, handled:0, inSla:0, outSla:0, abExFast:0, fastAb:0}));
+      const hourStats = Array.from({length:24}, (_,h)=>({hour:h, offered:0, handled:0, inSla:0, outSla:0, abExFast:0, fastAb:0, agents: new Set()}));
       voice.forEach(r => {
         if(!r._dt) return;
         const h = r._dt.getHours();
@@ -1293,6 +1323,15 @@
           hs.handled++;
           if(num(cell(r,'totalQueue')) <= ANSWER_SLA_MS) hs.inSla++;
           else hs.outSla++;
+
+          // Track agents who handled a call in this hour
+          const uStr = String(cell(r, 'users') || '').trim();
+          if (uStr) {
+            uStr.split(';').forEach(u => {
+              const name = u.trim();
+              if (name) hs.agents.add(name);
+            });
+          }
         } else if(isAbandoned(r)){
           if(num(cell(r,'totalQueue')) > FAST_ABANDON_MS) hs.abExFast++;
           else hs.fastAb++;
@@ -1346,7 +1385,7 @@
           const hGosClr = hGosVal === null ? 'var(--muted)' : hGosVal >= 0.8 ? CHART.green : hGosVal >= 0.6 ? CHART.amber : CHART.red;
           
           // Dot
-          svgContent += `<circle cx="${x}" cy="${y}" r="4" fill="${dotColor}" stroke="#fff" stroke-width="1.5" class="cum-gos-dot" data-hidx="${i}" data-hour="${lbl}:00" data-gos="${hGosText}" data-rungos="${pct(cp.runGos)}" data-color="${hGosClr}" style="cursor:pointer;"/>`;
+          svgContent += `<circle cx="${x}" cy="${y}" r="4" fill="${dotColor}" stroke="#fff" stroke-width="1.5" class="cum-gos-dot" data-hidx="${i}" data-hour="${lbl}:00" data-gos="${hGosText}" data-rungos="${pct(cp.runGos)}" data-color="${hGosClr}" data-agents="${cp.agents.size}" style="cursor:pointer;"/>`;
           
           // Smart label step to prevent overlaps (removes GOS % text above the dots)
           const showLabel = (i % labelStep === 0 && (n - 1 - i) >= Math.ceil(labelStep / 2)) || (i === n - 1);
@@ -1384,7 +1423,7 @@
           const heightPct = hs.handled ? Math.max((hGos * 100).toFixed(0), 6) : 0;
           const color = hs.handled === 0 ? 'var(--line-strong)' : hGos >= 0.8 ? CHART.green : hGos >= 0.6 ? CHART.amber : CHART.red;
           const lbl = String(hs.hour).padStart(2,'0');
-          body += `<div class="h-gos-col" data-hidx="${i}" title="${lbl}:00 — Click for details">
+          body += `<div class="h-gos-col" data-hidx="${i}" title="${lbl}:00 — ${hs.agents.size} agent${hs.agents.size !== 1 ? 's' : ''} active — Click for details">
             <span class="h-gos-val">${hs.handled?Math.round(hGos*100)+'%':'-'}</span>
             <div class="h-gos-bar" style="height:${heightPct}%;background:${color}"></div>
             <span class="h-gos-lbl">${lbl}</span>
@@ -1410,7 +1449,7 @@
           const ansH = totalM > 0 ? ((hs.outSla / totalM) * 100).toFixed(0) : 0;
           const abH = totalM > 0 ? ((hs.abExFast / totalM) * 100).toFixed(0) : 0;
           const lbl = String(hs.hour).padStart(2,'0');
-          body += `<div class="h-miss-col" data-hidx="${i}" title="${lbl}:00 — Click for details">
+          body += `<div class="h-miss-col" data-hidx="${i}" title="${lbl}:00 — ${hs.agents.size} agent${hs.agents.size !== 1 ? 's' : ''} active — Click for details">
             <span class="h-miss-val">${totalM > 0 ? totalM : ''}</span>
             <div class="h-miss-stack" style="height:${hPct}%;">
               ${hs.outSla > 0 ? `<div class="h-miss-seg" style="height:${ansH}%;background:${CHART.amber}"></div>` : ''}
@@ -1476,6 +1515,7 @@
               <div class="hd-stat"><div class="hd-stat-label">Abandoned</div><div class="hd-stat-value" style="color:${CHART.red}">${cp.abExFast}</div><div class="hd-stat-sub">> 20s dropped</div></div>
               <div class="hd-stat"><div class="hd-stat-label">Hour GOS</div><div class="hd-stat-value">${hGosPct}%</div><div class="hd-stat-sub">this hour only</div></div>
               <div class="hd-stat"><div class="hd-stat-label">Cumul. GOS</div><div class="hd-stat-value">${runGosPct}%</div><div class="hd-stat-sub">${cp.cumInSla}/${cp.cumHandled} total</div></div>
+              <div class="hd-stat" style="grid-column: span 3; text-align: left;"><div class="hd-stat-label">Active Agents (${cp.agents.size})</div><div class="hd-stat-sub" style="font-size: 11px; margin-top: 4px; color: var(--ink); font-family: var(--sans);">${Array.from(cp.agents).sort().join(', ') || 'None'}</div></div>
             </div>
             <div class="hd-narrative">${narrative}</div>`;
           detailPanel.classList.add('open');
@@ -1505,7 +1545,8 @@
             const tt = document.getElementById('chartTooltip');
             tt.innerHTML = `<div style="font-weight:700;color:#fff;margin-bottom:3px;">${dot.dataset.hour}</div>
                              <div style="font-size:10.5px;margin-bottom:2px;">Hour GOS: <strong style="color:${dot.dataset.color}">${dot.dataset.gos}</strong></div>
-                             <div style="font-size:10.5px;opacity:0.85;">Running GOS: <strong style="color:var(--chart-blue)">${dot.dataset.rungos}</strong></div>`;
+                             <div style="font-size:10.5px;opacity:0.85;margin-bottom:2px;">Running GOS: <strong style="color:var(--chart-blue)">${dot.dataset.rungos}</strong></div>
+                             <div style="font-size:10.5px;opacity:0.85;">Active Agents: <strong style="color:var(--chart-indigo)">${dot.dataset.agents}</strong></div>`;
             tt.style.display = 'block';
           });
           dot.addEventListener('mousemove', (e) => {
@@ -1720,13 +1761,27 @@
         const abandonExFast=voice.filter(r=>isAbandoned(r)&&num(cell(r,'totalQueue'))>FAST_ABANDON_MS);
         const handleMs=handled.map(r=>num(cell(r,'totalHandle'))).filter(v=>v>0);
         const avgHandle=handleMs.length?handleMs.reduce((s,v)=>s+v,0)/handleMs.length:0;
+
+        // Unique agents who handled voice calls on this day
+        const dayUniqueAgents = new Set();
+        handled.forEach(r => {
+          const uStr = String(cell(r, 'users') || '').trim();
+          if (uStr) {
+            uStr.split(';').forEach(u => {
+              const name = u.trim();
+              if (name) dayUniqueAgents.add(name);
+            });
+          }
+        });
+
         return {
           offered:all.length,voice:voice.length,handled:handled.length,
           handledInSla:handledInSla.length,fastAbandons:fastAbandons.length,
           abandonExFast:abandonExFast.length,
           gos:handled.length?handledInSla.length/handled.length:null,
           abandonRate:all.length?abandonExFast.length/all.length:null,
-          avgHandle
+          avgHandle,
+          uniqueAgents: dayUniqueAgents.size
         };
       }
 
@@ -1735,7 +1790,7 @@
       const tw=document.getElementById('dayTableWrap');
       let html=`<table class="day-table"><thead><tr>
         <th>Date</th><th>Offered</th><th>Handled</th><th>Call GOS</th>
-        <th>Abandon Rate</th><th>Abandon Count</th><th>Avg Handle</th>
+        <th>Abandon Rate</th><th>Abandon Count</th><th>Avg Handle</th><th>Agents</th>
       </tr></thead><tbody>`;
       days.forEach(([k,{dt,rows}])=>{
         const d=calcDay(rows);
@@ -1748,6 +1803,7 @@
           <td><span class="pill ${abClass}">${d.abandonRate!==null?pct(d.abandonRate):'-'}</span></td>
           <td>${d.abandonExFast}</td>
           <td>${d.avgHandle?fmtSec(d.avgHandle):'-'}</td>
+          <td><strong style="color:var(--chart-indigo)">${d.uniqueAgents}</strong></td>
         </tr>`;
       });
       tw.innerHTML=html+'</tbody></table>';
@@ -1778,6 +1834,7 @@
             {label:'Abandon Rate',vA:da.stats.abandonRate,vB:db.stats.abandonRate,f:v=>v!==null?pct(v):'-',hi:'bad',isP:true},
             {label:'Abandon Count',vA:da.stats.abandonExFast,vB:db.stats.abandonExFast,f:v=>fmt(v),hi:'bad'},
             {label:'Avg Handle',vA:da.stats.avgHandle,vB:db.stats.avgHandle,f:v=>v?fmtSec(v):'-',hi:'neutral'},
+            {label:'Active Agents',vA:da.stats.uniqueAgents,vB:db.stats.uniqueAgents,f:v=>fmt(v),hi:'neutral'},
           ];
           let h=`<div class="comp-header">
             <div class="comp-metric-label"></div>
