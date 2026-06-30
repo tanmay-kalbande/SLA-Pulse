@@ -412,6 +412,8 @@
     }
     .day-table tr.clickable-row{cursor:pointer;transition:background .12s;}
     .day-table tr.clickable-row:hover{background:rgba(59,130,246,.08);}
+    .clickable-agent-pill{cursor:pointer;background:var(--surface);transition:all .15s;}
+    .clickable-agent-pill:hover{background:var(--surface-2) !important;border-color:var(--line-strong) !important;box-shadow:0 2px 6px rgba(0,0,0,.05);}
     
     .drawer-back{
       background:rgba(255,255,255,.08);
@@ -1312,6 +1314,35 @@
         <div style="margin-top:10px;font-size:11px;font-family:var(--mono);line-height:1.4;background:var(--surface);padding:8px 10px;border-radius:4px;border:1px solid var(--line);">${takeaway}</div>
       </div>`;
 
+      // 1b. Active Agents List for the Day
+      const dayAgentCalls = {};
+      handled.forEach(r => {
+        const uStr = String(cell(r, 'users') || '').trim();
+        if (uStr) {
+          uStr.split(';').forEach(u => {
+            const name = u.trim();
+            if (name) {
+              dayAgentCalls[name] = (dayAgentCalls[name] || 0) + 1;
+            }
+          });
+        }
+      });
+      const sortedAgents = Object.entries(dayAgentCalls).sort((a,b) => b[1] - a[1]);
+      
+      body += `<div class="drawer-section" style="margin-top:14px;">
+        <h4>Active Agents Today (${sortedAgents.length}) — click to view agent performance</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:10px;">`;
+      if (sortedAgents.length === 0) {
+        body += `<span style="font-size:11px;color:var(--muted);font-family:var(--mono);">No active agents took calls today.</span>`;
+      } else {
+        sortedAgents.forEach(([name, count]) => {
+          body += `<span class="pill neutral clickable-agent-pill" onclick="closeDayDrawer(); setTimeout(() => openAgentDrawer('${escHtml(name).replace(/'/g, "\\'")}'), 150);" style="font-size:11px;font-family:var(--mono);padding:4px 8px;border:1px solid var(--line);border-radius:4px;display:inline-flex;align-items:center;gap:6px;user-select:none;">
+            👤 <strong>${escHtml(name)}</strong> <span style="color:var(--muted);font-size:10px;">(${count} call${count > 1 ? 's' : ''})</span>
+          </span>`;
+        });
+      }
+      body += `</div></div>`;
+
       // 2. Hourly stats
       const hourStats = Array.from({length:24}, (_,h)=>({hour:h, offered:0, handled:0, inSla:0, outSla:0, abExFast:0, fastAb:0, agents: new Set()}));
       voice.forEach(r => {
@@ -1796,6 +1827,22 @@
         const d=calcDay(rows);
         const gosClass=d.gos===null?'neutral':d.gos>=0.8?'ok':d.gos>=0.6?'warn':'err';
         const abClass=d.abandonRate===null?'neutral':d.abandonRate<=0.05?'ok':d.abandonRate<=0.1?'warn':'err';
+
+        // Unique agent names for the day to show on hover
+        const voice = rows.filter(isVoice);
+        const handled = voice.filter(isHandled);
+        const dayUniqueAgents = new Set();
+        handled.forEach(r => {
+          const uStr = String(cell(r, 'users') || '').trim();
+          if (uStr) {
+            uStr.split(';').forEach(u => {
+              const name = u.trim();
+              if (name) dayUniqueAgents.add(name);
+            });
+          }
+        });
+        const agentNamesList = Array.from(dayUniqueAgents).sort().join(', ');
+
         html+=`<tr class="clickable-row" onclick="openDayDrawer('${k}')">
           <td style="font-weight:600;color:var(--ink)">${dayLabel(dt)} 🔍</td>
           <td>${d.offered}</td><td>${d.handled}</td>
@@ -1803,7 +1850,7 @@
           <td><span class="pill ${abClass}">${d.abandonRate!==null?pct(d.abandonRate):'-'}</span></td>
           <td>${d.abandonExFast}</td>
           <td>${d.avgHandle?fmtSec(d.avgHandle):'-'}</td>
-          <td><strong style="color:var(--chart-indigo)">${d.uniqueAgents}</strong></td>
+          <td title="Active Agents: ${agentNamesList || 'None'}"><strong style="color:var(--chart-indigo)">${d.uniqueAgents}</strong></td>
         </tr>`;
       });
       tw.innerHTML=html+'</tbody></table>';
