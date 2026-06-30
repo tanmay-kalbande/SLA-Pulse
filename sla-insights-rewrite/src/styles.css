@@ -63,48 +63,36 @@
     .logo{
       width:42px;height:42px;border-radius:6px;
       color:var(--rail-bg);
-      display:grid;place-items:center;flex:0 0 auto;
+      display:flex;align-items:center;justify-content:center;flex:0 0 auto;
       font-family:var(--mono);font-weight:700;font-size:13px;
       letter-spacing:.03em;position:relative;
       border:1px solid rgba(255,255,255,.15);
       text-decoration:none;
       user-select:none;
-      background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #F8FAFC 100%);
-      background-size: 200% 200%;
-      animation: logoGlowPulse 3s ease-in-out infinite, gradientShine 3s ease infinite;
-      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      background: #F8FAFC;
+      box-shadow: 0 4px 12px rgba(248, 250, 252, 0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     .logo:hover{
-      transform: scale(1.06) translateY(-2px);
-      box-shadow: 0 6px 20px rgba(248, 250, 252, 0.25), 0 0 0 4px rgba(248, 250, 252, 0.15);
-    }
-    @keyframes gradientShine {
-      0%{background-position:0% 50%}
-      50%{background-position:100% 50%}
-      100%{background-position:0% 50%}
-    }
-    @keyframes logoGlowPulse {
-      0%, 100% {
-        box-shadow: 0 4px 12px rgba(248, 250, 252, 0.08), 0 0 0 0px rgba(248, 250, 252, 0.1);
-      }
-      50% {
-        box-shadow: 0 4px 18px rgba(248, 250, 252, 0.18), 0 0 0 4px rgba(248, 250, 252, 0.2);
-      }
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(248, 250, 252, 0.15);
     }
     .logo-letter {
       display: inline-block;
-      animation: letterFloat 4s ease-in-out infinite;
+      animation: letterRipple 6s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite;
     }
     .logo-letter:nth-child(1) { animation-delay: 0s; }
-    .logo-letter:nth-child(2) { animation-delay: 0.2s; }
-    .logo-letter:nth-child(3) { animation-delay: 0.4s; }
+    .logo-letter:nth-child(2) { animation-delay: 0.1s; }
+    .logo-letter:nth-child(3) { animation-delay: 0.2s; }
 
-    @keyframes letterFloat {
-      0%, 100% {
-        transform: translateY(0);
+    @keyframes letterRipple {
+      0%, 15%, 100% {
+        transform: translateY(0) scale(1);
+        color: var(--rail-bg);
       }
-      50% {
-        transform: translateY(-2.5px);
+      5% {
+        transform: translateY(-3px) scale(1.05);
+        color: var(--chart-blue);
       }
     }
     .brand-title{min-width:0}
