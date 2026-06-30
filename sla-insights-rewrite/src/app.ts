@@ -133,9 +133,9 @@ document.body.innerHTML = appTemplate;
       rebuildAnalytics(allMappedRows);
     });
 
-    // ── PASSWORD DIALOG ──
-    document.getElementById('logoBtn').addEventListener('click', triggerUnlock);
-    document.getElementById('logoBtn').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') triggerUnlock(); });
+    // ── ANALYTICS ACCESS ──
+    document.getElementById('logoBtn').addEventListener('click', openAnalytics);
+    document.getElementById('logoBtn').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') openAnalytics(); });
 
     // ── TOAST HELPER ──
     function showToast(msg){
@@ -163,21 +163,6 @@ document.body.innerHTML = appTemplate;
     function dismissToast(t){
       t.classList.add('hide');
       setTimeout(()=>t.remove(),300);
-    }
-
-    async function sha256(str){
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str + _s));
-      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    }
-    async function triggerUnlock(){
-      const val = prompt('Enter password to unlock advanced insights:');
-      if (val === null) return; // User cancelled
-      const hash = await sha256(val);
-      if(hash === PASSWORD_HASH){
-        openAnalytics();
-      } else {
-        alert('Incorrect password. Try again.');
-      }
     }
 
     // ── ANALYTICS OVERLAY ──
