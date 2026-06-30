@@ -62,13 +62,31 @@
     .brand{display:flex;align-items:center;gap:11px;min-width:0}
     .logo{
       width:42px;height:42px;border-radius:6px;
-      background:#F8FAFC;color:var(--rail-bg);
+      color:var(--rail-bg);
       display:grid;place-items:center;flex:0 0 auto;
       font-family:var(--mono);font-weight:700;font-size:13px;
       letter-spacing:.03em;position:relative;
       border:1px solid rgba(255,255,255,.15);
       text-decoration:none;
       user-select:none;
+      background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 50%, #F8FAFC 100%);
+      background-size: 200% 200%;
+      animation: logoPulse 8s ease-in-out infinite, gradientShine 8s ease infinite;
+      box-shadow: 0 4px 12px rgba(248, 250, 252, 0.08);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .logo:hover{
+      transform: scale(1.04) translateY(-1px);
+      box-shadow: 0 6px 16px rgba(248, 250, 252, 0.15);
+    }
+    @keyframes gradientShine {
+      0%{background-position:0% 50%}
+      50%{background-position:100% 50%}
+      100%{background-position:0% 50%}
+    }
+    @keyframes logoPulse {
+      0%, 100%{transform:scale(1)}
+      50%{transform:scale(1.025)}
     }
     .brand-title{min-width:0}
     .brand-title h1{margin:0;font-size:15px;line-height:1.1;color:#fff;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}

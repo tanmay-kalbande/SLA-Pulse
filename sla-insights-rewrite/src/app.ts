@@ -47,22 +47,60 @@ document.body.innerHTML = appTemplate;
 
     // ── HELPERS ──
     function parseCSV(text){
-      const rows=[]; let row=[], cur='', inQuotes=false;
-      for(let i=0;i<text.length;i++){
-        const ch=text[i], next=text[i+1];
-        if(ch==='"'){ if(inQuotes&&next==='"'){ cur+='"'; i++; } else inQuotes=!inQuotes; }
-        else if(ch===','&&!inQuotes){ row.push(cur); cur=''; }
-        else if((ch==='\n'||ch==='\r')&&!inQuotes){
-          if(ch==='\r'&&next==='\n') i++;
-          row.push(cur); cur='';
-          if(row.some(v=>String(v).trim()!='')) rows.push(row);
-          row=[];
-        } else cur+=ch;
+      const rows=[];
+      const len = text.length;
+      let row = [];
+      let inQuotes = false;
+      let fieldStart = 0;
+      let curField = '';
+      
+      for (let i = 0; i < len; i++) {
+        const ch = text[i];
+        if (ch === '"') {
+          if (inQuotes && text[i + 1] === '"') {
+            curField += text.slice(fieldStart, i) + '"';
+            i++; 
+            fieldStart = i + 1;
+          } else {
+            curField += text.slice(fieldStart, i);
+            inQuotes = !inQuotes;
+            fieldStart = i + 1;
+          }
+        } else if (ch === ',' && !inQuotes) {
+          curField += text.slice(fieldStart, i);
+          row.push(curField);
+          curField = '';
+          fieldStart = i + 1;
+        } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+          curField += text.slice(fieldStart, i);
+          row.push(curField);
+          curField = '';
+          if (ch === '\r' && text[i + 1] === '\n') {
+            i++;
+          }
+          fieldStart = i + 1;
+          if (row.some(v => String(v).trim() !== '')) {
+            rows.push(row);
+          }
+          row = [];
+        }
       }
-      row.push(cur); if(row.some(v=>String(v).trim()!='')) rows.push(row);
-      if(!rows.length) return [];
-      const headers=rows[0].map(h=>String(h).trim().replace(/^\uFEFF/,''));
-      return rows.slice(1).map(r=>{ const obj={}; headers.forEach((h,i)=>obj[h]=(r[i]??'').trim()); return obj; });
+      
+      if (fieldStart < len || curField) {
+        curField += text.slice(fieldStart);
+        row.push(curField);
+      }
+      if (row.some(v => String(v).trim() !== '')) {
+        rows.push(row);
+      }
+      
+      if (!rows.length) return [];
+      const headers = rows[0].map(h => String(h).trim().replace(/^\uFEFF/, ''));
+      return rows.slice(1).map(r => {
+        const obj = {};
+        headers.forEach((h, idx) => obj[h] = (r[idx] ?? '').trim());
+        return obj;
+      });
     }
     function parseDate(value){
       if(!value) return null;
