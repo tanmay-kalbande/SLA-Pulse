@@ -387,6 +387,7 @@
     .drawer-overlay{position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:opacity .25s;}
     .drawer-overlay.open{opacity:1;pointer-events:all;}
     .agent-drawer{position:fixed;top:0;right:0;height:100%;width:460px;background:var(--surface);z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:-8px 0 32px rgba(0,0,0,.1);}
+    #agentDrawer{z-index:205;}
     .agent-drawer.open{transform:translateX(0);}
     .drawer-header{background:var(--rail-bg);padding:20px 20px 16px;flex-shrink:0;position:relative;border-left:1px solid var(--rail-border);}
     .drawer-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:4px;color:#aaa;font-size:16px;width:28px;height:28px;cursor:pointer;display:grid;place-items:center;line-height:1;transition:background .13s;}
@@ -1051,13 +1052,17 @@
     document.getElementById('drawerOverlay').addEventListener('click', ()=>{ closeDrawer(); closeDayDrawer(); });
     function closeDrawer(){
       document.getElementById('agentDrawer').classList.remove('open');
-      document.getElementById('drawerOverlay').classList.remove('open');
+      if (!document.getElementById('dayDrawer').classList.contains('open')) {
+        document.getElementById('drawerOverlay').classList.remove('open');
+      }
     }
 
     // ── DAY DRILLDOWN DRAWER ──
     function closeDayDrawer(){
       document.getElementById('dayDrawer').classList.remove('open');
-      document.getElementById('drawerOverlay').classList.remove('open');
+      if (!document.getElementById('agentDrawer').classList.contains('open')) {
+        document.getElementById('drawerOverlay').classList.remove('open');
+      }
     }
     document.getElementById('dayDrawerClose').addEventListener('click', closeDayDrawer);
     document.getElementById('dayDrawerBack').addEventListener('click', () => {
@@ -1351,7 +1356,7 @@
         body += `<span style="font-size:11px;color:var(--muted);font-family:var(--mono);">No active agents took calls today.</span>`;
       } else {
         sortedAgents.forEach(([name, count]) => {
-          body += `<span class="pill neutral clickable-agent-pill" onclick="closeDayDrawer(); openAgentDrawer('${escHtml(name).replace(/'/g, "\\'")}');" style="font-size:11px;font-family:var(--mono);padding:4px 8px;border:1px solid var(--line);border-radius:4px;display:inline-flex;align-items:center;gap:6px;user-select:none;">
+          body += `<span class="pill neutral clickable-agent-pill" onclick="openAgentDrawer('${escHtml(name).replace(/'/g, "\\'")}');" style="font-size:11px;font-family:var(--mono);padding:4px 8px;border:1px solid var(--line);border-radius:4px;display:inline-flex;align-items:center;gap:6px;user-select:none;">
             👤 <strong>${escHtml(name)}</strong>
           </span>`;
         });
