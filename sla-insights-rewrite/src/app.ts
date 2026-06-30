@@ -133,13 +133,9 @@ document.body.innerHTML = appTemplate;
       rebuildAnalytics(allMappedRows);
     });
 
-    // ── PASSWORD MODAL ──
-    const modalOverlay = document.getElementById('modalOverlay');
-    const pwInput = document.getElementById('pwInput');
-    const pwError = document.getElementById('pwError');
-
-    document.getElementById('logoBtn').addEventListener('click', openModal);
-    document.getElementById('logoBtn').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') openModal(); });
+    // ── PASSWORD DIALOG ──
+    document.getElementById('logoBtn').addEventListener('click', triggerUnlock);
+    document.getElementById('logoBtn').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') triggerUnlock(); });
 
     // ── TOAST HELPER ──
     function showToast(msg){
@@ -169,36 +165,18 @@ document.body.innerHTML = appTemplate;
       setTimeout(()=>t.remove(),300);
     }
 
-    function openModal(){
-      pwInput.value=''; pwError.classList.remove('show');
-      modalOverlay.classList.add('open');
-      setTimeout(()=>pwInput.focus(),200);
-    }
-    function closeModal(){ modalOverlay.classList.remove('open'); }
-
-    document.getElementById('modalCancel').addEventListener('click', closeModal);
-    modalOverlay.addEventListener('click', e=>{ if(e.target===modalOverlay) closeModal(); });
-
-    document.getElementById('pwEye').addEventListener('click',()=>{
-      pwInput.type = pwInput.type==='password'?'text':'password';
-    });
-
-    pwInput.addEventListener('keydown', e=>{ if(e.key==='Enter') attemptUnlock(); });
-    document.getElementById('modalUnlock').addEventListener('click', attemptUnlock);
-
     async function sha256(str){
       const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str + _s));
       return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
     }
-    async function attemptUnlock(){
-      const hash = await sha256(pwInput.value);
+    async function triggerUnlock(){
+      const val = prompt('Enter password to unlock advanced insights:');
+      if (val === null) return; // User cancelled
+      const hash = await sha256(val);
       if(hash === PASSWORD_HASH){
-        closeModal();
         openAnalytics();
       } else {
-        pwError.classList.add('show');
-        pwInput.value='';
-        pwInput.focus();
+        alert('Incorrect password. Try again.');
       }
     }
 
