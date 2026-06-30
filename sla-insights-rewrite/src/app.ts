@@ -526,13 +526,13 @@ document.body.innerHTML = appTemplate;
       const sortedAgents = Object.entries(dayAgentCalls).sort((a,b) => b[1] - a[1]);
       
       body += `<div class="drawer-section" style="margin-top:14px;">
-        <h4>Active Agents Today (${sortedAgents.length}) — click a name to drill down</h4>
+        <h4>Active Agents Today (${sortedAgents.length})</h4>
         <div style="display:flex;flex-wrap:wrap;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:10px;">`;
       if (sortedAgents.length === 0) {
         body += `<span style="font-size:11px;color:var(--muted);font-family:var(--mono);">No active agents took calls today.</span>`;
       } else {
         sortedAgents.forEach(([name, count]) => {
-          body += `<span class="pill neutral clickable-agent-pill" onclick="openAgentDrawer('${escHtml(name).replace(/'/g, "\\'")}');" style="font-size:11px;font-family:var(--mono);padding:4px 8px;border:1px solid var(--line);border-radius:4px;display:inline-flex;align-items:center;gap:6px;user-select:none;">
+          body += `<span class="pill neutral" style="font-size:11px;font-family:var(--mono);padding:4px 8px;border:1px solid var(--line);border-radius:4px;display:inline-flex;align-items:center;gap:6px;user-select:none;">
             👤 <strong>${escHtml(name)}</strong>
           </span>`;
         });
@@ -797,6 +797,7 @@ document.body.innerHTML = appTemplate;
       document.getElementById('drawerOverlay').classList.add('open');
     }
     function openAgentDrawer(name){
+      return false;
       if (!window._agentMap) return;
       
       const targetName = String(name || '').trim().toLowerCase();
@@ -1189,7 +1190,7 @@ document.body.innerHTML = appTemplate;
           const efficiency=a.total?a.handled/a.total:0;
           const sClass=slaR>=0.8?'ok':slaR>=0.6?'warn':'err';
           const eClass=efficiency>0.8?'ok':efficiency>0.5?'warn':'err';
-          html+=`<tr class="clickable-row" onclick="openAgentDrawer('${escHtml(name).replace(/'/g,"\\'")}')">
+          html+=`<tr>
             <td><span class="agent-name">${escHtml(name)}</span></td>
             <td>${a.total}</td><td>${a.handled}</td>
             <td>${avgH?fmtSec(avgH):'-'}</td><td>${avgHo?fmtSec(avgHo):'-'}</td>
@@ -1208,7 +1209,7 @@ document.body.innerHTML = appTemplate;
         agents.forEach(([name,a],i)=>{
           const avg=avgHandle(a); const w=maxHandle>0?(avg/maxHandle)*100:0;
           const shortName=name.split(' ')[0];
-          h+=`<div class="bar-row"><div class="bar-label clickable" title="${escHtml(name)}" onclick="openAgentDrawer('${escHtml(name).replace(/'/g,"\\'")}')">${escHtml(shortName)}</div><div class="bar-track"><div class="bar-fill" style="width:${w.toFixed(1)}%;background:${MULTI[i%MULTI.length]}"></div></div><div class="bar-val">${avg?fmtSec(avg):'-'}</div></div>`;
+          h+=`<div class="bar-row"><div class="bar-label" title="${escHtml(name)}">${escHtml(shortName)}</div><div class="bar-track"><div class="bar-fill" style="width:${w.toFixed(1)}%;background:${MULTI[i%MULTI.length]}"></div></div><div class="bar-val">${avg?fmtSec(avg):'-'}</div></div>`;
         });
         hEl.innerHTML=h;
       }
@@ -1223,7 +1224,7 @@ document.body.innerHTML = appTemplate;
           const w=(slaR*100).toFixed(1);
           const color=slaR>=0.8?CHART.green:slaR>=0.6?CHART.amber:CHART.red;
           const shortName=name.split(' ')[0];
-          h+=`<div class="bar-row"><div class="bar-label clickable" title="${escHtml(name)}" onclick="openAgentDrawer('${escHtml(name).replace(/'/g,"\\'")}')">${escHtml(shortName)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div><div class="bar-val">${pct(slaR)}</div></div>`;
+          h+=`<div class="bar-row"><div class="bar-label" title="${escHtml(name)}">${escHtml(shortName)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div><div class="bar-val">${pct(slaR)}</div></div>`;
         });
         slaEl.innerHTML=h;
       }
@@ -1417,4 +1418,4 @@ document.body.innerHTML = appTemplate;
       downloadText('SLA_Summary.csv',summary,'text/csv');
     });
 
-Object.assign(window, { openDayDrawer, openAgentDrawer });
+Object.assign(window, { openDayDrawer });
