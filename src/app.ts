@@ -1228,6 +1228,60 @@ document.body.innerHTML = appTemplate;
       }
     }
 
+    // ── LEADERBOARD (Top Performers) ──
+    function buildLeaderboard(rows){
+      const el = document.getElementById('leaderboardWrap');
+      if(!el) return;
+      const MIN_CALLS = 5; // minimum handled calls to qualify for ranking, avoids 1-call 100% flukes
+      const agentMap = window._agentMap || {};
+      const agents = Object.entries(agentMap).map(([name, a]) => {
+        const slaR = a.handled ? a.handledInSla / a.handled : 0;
+        const avgHandle = a.handleMs.length ? a.handleMs.reduce((s, v) => s + v, 0) / a.handleMs.length : 0;
+        return { name, total: a.total, handled: a.handled, slaR, avgHandle };
+      });
+
+      if (!agents.length) {
+        el.innerHTML = '<div class="empty-state"><div class="ei">🏆</div><p>No individual agent data found.</p></div>';
+        return;
+      }
+
+      const eligible = agents.filter(a => a.handled >= MIN_CALLS);
+      const bySla = [...eligible].sort((a, b) => b.slaR - a.slaR).slice(0, 5);
+      const byVolume = [...agents].sort((a, b) => b.handled - a.handled).slice(0, 5);
+      const coaching = [...eligible].filter(a => a.avgHandle > 0).sort((a, b) => b.avgHandle - a.avgHandle).slice(0, 3);
+
+      const medal = i => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+
+      function renderList(list, valueFn, subFn, cls) {
+        if (!list.length) return `<div class="empty-state"><p>Not enough data (min ${MIN_CALLS} handled calls).</p></div>`;
+        return list.map((a, i) => `
+          <div class="lb-row ${cls}">
+            <div class="lb-rank">${medal(i)}</div>
+            <div class="lb-name" title="${escHtml(a.name)}">${escHtml(a.name)}</div>
+            <div class="lb-value">${valueFn(a)}</div>
+            <div class="lb-sub">${subFn(a)}</div>
+          </div>`).join('');
+      }
+
+      el.innerHTML = `
+        <div class="lb-columns">
+          <div class="lb-col">
+            <h4>🎯 Top SLA Compliance</h4>
+            ${renderList(bySla, a => pct(a.slaR), a => a.handled + ' handled', 'lb-sla')}
+          </div>
+          <div class="lb-col">
+            <h4>📞 Most Calls Handled</h4>
+            ${renderList(byVolume, a => fmt(a.handled), a => pct(a.slaR) + ' SLA', 'lb-volume')}
+          </div>
+          <div class="lb-col">
+            <h4>🧑‍🏫 Coaching Opportunities</h4>
+            ${renderList(coaching, a => fmtSec(a.avgHandle), a => a.handled + ' handled · ' + pct(a.slaR) + ' SLA', 'lb-coach')}
+          </div>
+        </div>
+        <div class="lb-note">Ranked only among agents with ${MIN_CALLS}+ handled calls in range, except "Most Calls Handled" which includes everyone.</div>
+      `;
+    }
+
     // ── QUEUE INSIGHTS ──
     function buildQueueInsights(rows){
       const queueMap={};
@@ -1360,6 +1414,169 @@ document.body.innerHTML = appTemplate;
         h+=`<div class="bar-row"><div class="bar-label" style="text-transform:capitalize">${escHtml(name)}</div><div class="bar-track"><div class="bar-fill" style="width:${w.toFixed(1)}%;background:${color}"></div></div><div class="bar-val">${count} (${pct(count/totalMedia)})</div></div>`;
       });
       mEl.innerHTML=h||'<div class="empty-state"><p>No data.</p></div>';
+    }
+
+    // ── WEEKLY HEATMAP (Day-of-Week x Hour-of-Day) ──
+    function buildWeeklyHeatmap(rows){
+      const el = document.getElementById('weeklyHeatmap');
+      if(!el) return;
+      const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      // matrix[dayOfWeek][hour] = {total, abandoned}
+      const matrix = Array.from({length:7}, () => Array.from({length:24}, () => ({total:0, abandoned:0})));
+
+      rows.forEach(r=>{
+        if(!r._dt) return;
+        const dow = (r._dt.getDay() + 6) % 7; // 0=Mon ... 6=Sun
+        const hr = r._dt.getHours();
+        matrix[dow][hr].total++;
+        if(isAbandoned(r)) matrix[dow][hr].abandoned++;
+      });
+
+      let maxCount = 0;
+      let peak = {day:0, hour:0, total:0, abandoned:0};
+      matrix.forEach((row,d)=>row.forEach((c,h)=>{
+        if(c.total > maxCount) maxCount = c.total;
+        if(c.total > peak.total) peak = {day:d, hour:h, total:c.total, abandoned:c.abandoned};
+      }));
+
+      if(maxCount === 0){
+        el.innerHTML = '<div class="empty-state"><div class="ei">🔥</div><p>No data.</p></div>';
+        return;
+      }
+
+      let html = '<div class="heatmap-wrap"><div class="heatmap-grid">';
+      html += '<div class="hm-cell hm-corner"></div>';
+      for(let h=0; h<24; h++){
+        html += `<div class="hm-cell hm-hlabel">${h % 3 === 0 ? String(h).padStart(2,'0') : ''}</div>`;
+      }
+      matrix.forEach((row,d)=>{
+        html += `<div class="hm-cell hm-dlabel">${DAYS[d]}</div>`;
+        row.forEach((c,h)=>{
+          const norm = c.total / maxCount;
+          const isPeak = (d === peak.day && h === peak.hour);
+          const abRate = c.total ? c.abandoned / c.total : 0;
+          const bg = c.total === 0 ? 'var(--surface-2)' : `rgba(59,130,246,${(0.08 + 0.82 * norm).toFixed(2)})`;
+          const showLabel = c.total > 0 && norm > 0.55;
+          html += `<div class="hm-cell hm-data${isPeak ? ' hm-peak' : ''}" style="background:${bg}" title="${DAYS[d]} ${String(h).padStart(2,'0')}:00 — ${c.total} calls, ${pct(abRate)} abandoned">${showLabel ? c.total : ''}</div>`;
+        });
+      });
+      html += '</div></div>';
+
+      const peakAbRate = peak.total ? peak.abandoned / peak.total : 0;
+      const nextHour = (peak.hour + 1) % 24;
+      html += `<div class="hm-insight">📍 Busiest slot: <strong>${DAYS[peak.day]} ${String(peak.hour).padStart(2,'0')}:00–${String(nextHour).padStart(2,'0')}:00</strong> with <strong>${peak.total}</strong> calls (${pct(peakAbRate)} abandoned). Staff up around this window first.</div>`;
+      html += `<div class="hm-legend">Lighter = quieter <div class="hm-legend-scale"><span style="background:rgba(59,130,246,0.08)"></span><span style="background:rgba(59,130,246,0.3)"></span><span style="background:rgba(59,130,246,0.55)"></span><span style="background:rgba(59,130,246,0.8)"></span><span style="background:rgba(59,130,246,0.95)"></span></div> Darker = busier</div>`;
+
+      el.innerHTML = html;
+    }
+
+    // ── SLA BREACH ROOT-CAUSE ANALYSIS ──
+    function buildSlaBreachAnalysis(rows){
+      const kpiEl = document.getElementById('breachKpis');
+      if(!kpiEl) return;
+
+      const voice = rows.filter(isVoice);
+      const outSla = voice.filter(r => isHandled(r) && num(cell(r,'totalQueue')) > ANSWER_SLA_MS);
+      const abLate = voice.filter(r => isAbandoned(r) && num(cell(r,'totalQueue')) > FAST_ABANDON_MS);
+      const breaches = [...outSla, ...abLate];
+      const breachRate = voice.length ? breaches.length / voice.length : 0;
+
+      kpiEl.innerHTML = [
+        {label:'Total Breaches', value: fmt(breaches.length), sub: 'answered late + abandoned late'},
+        {label:'Breach Rate', value: pct(breachRate), sub: 'of voice offered'},
+        {label:'Answered Late', value: fmt(outSla.length), sub: '> 20s to answer'},
+        {label:'Abandoned Late', value: fmt(abLate.length), sub: '> 20s, caller hung up'},
+      ].map(k => `<div class="mini-kpi"><div class="mini-kpi-label">${k.label}</div><div class="mini-kpi-value">${k.value}</div><div class="mini-kpi-sub">${k.sub}</div></div>`).join('');
+
+      const ids = ['breachQueueChart','breachDisconnectChart','breachWrapupChart','breachHourChart'];
+      const insightEl = document.getElementById('breachInsight');
+
+      if(!breaches.length){
+        ids.forEach(id => {
+          const e = document.getElementById(id);
+          if(e) e.innerHTML = '<div class="empty-state"><div class="ei">🎉</div><p>No SLA breaches in this range.</p></div>';
+        });
+        if(insightEl) insightEl.innerHTML = '';
+        return;
+      }
+
+      function shortQ(n){ return String(n).replace('GL MATALAN ','').replace(' EN',''); }
+
+      // By Queue
+      const qMap = {};
+      breaches.forEach(r => { const q = String(cell(r,'queue') || 'Unknown').trim(); qMap[q] = (qMap[q] || 0) + 1; });
+      const qEntries = Object.entries(qMap).sort((a,b) => b[1]-a[1]);
+      const qMax = qEntries.length ? qEntries[0][1] : 1;
+      const qEl = document.getElementById('breachQueueChart');
+      if(qEl) qEl.innerHTML = qEntries.map(([name,count],i) => {
+        const w = (count/qMax*100).toFixed(1);
+        return `<div class="bar-row"><div class="bar-label" title="${escHtml(name)}">${escHtml(shortQ(name))}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${MULTI[i%MULTI.length]}"></div></div><div class="bar-val">${count} (${pct(count/breaches.length)})</div></div>`;
+      }).join('');
+
+      // By Disconnect Type
+      const dMap = {};
+      breaches.forEach(r => { const d = String(cell(r,'disconnectType') || 'Unknown').trim(); dMap[d] = (dMap[d] || 0) + 1; });
+      const dEntries = Object.entries(dMap).sort((a,b) => b[1]-a[1]);
+      const dMax = dEntries.length ? dEntries[0][1] : 1;
+      const dcColors = {External:CHART.green, Agent:CHART.amber, System:CHART.red};
+      const dEl = document.getElementById('breachDisconnectChart');
+      if(dEl) dEl.innerHTML = dEntries.map(([name,count],i) => {
+        const w = (count/dMax*100).toFixed(1);
+        const color = dcColors[name] || MULTI[i%MULTI.length];
+        return `<div class="bar-row"><div class="bar-label">${escHtml(name)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div><div class="bar-val">${count} (${pct(count/breaches.length)})</div></div>`;
+      }).join('');
+
+      // By Wrap-up code
+      const wMap = {};
+      breaches.forEach(r => { const w = String(cell(r,'wrapup') || '').trim() || 'No Wrap-up'; wMap[w] = (wMap[w] || 0) + 1; });
+      const wEntries = Object.entries(wMap).sort((a,b) => b[1]-a[1]);
+      const wMax = wEntries.length ? wEntries[0][1] : 1;
+      const wEl = document.getElementById('breachWrapupChart');
+      if(wEl) wEl.innerHTML = wEntries.map(([name,count],i) => {
+        const w = (count/wMax*100).toFixed(1);
+        return `<div class="bar-row"><div class="bar-label" title="${escHtml(name)}">${escHtml(name)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${MULTI[i%MULTI.length]}"></div></div><div class="bar-val">${count} (${pct(count/breaches.length)})</div></div>`;
+      }).join('');
+
+      // By Hour of day
+      const hMap = Array.from({length:24}, () => 0);
+      breaches.forEach(r => { if(r._dt) hMap[r._dt.getHours()]++; });
+      const hMax = Math.max(...hMap, 1);
+      let hHtml = '<div class="hourly-wrap">';
+      hMap.forEach((count,h) => {
+        const hPct = (count/hMax*80);
+        hHtml += `<div class="h-bar-col" title="${String(h).padStart(2,'0')}:00 — ${count} breaches">
+          <div class="h-bar-handled" style="height:${hPct.toFixed(0)}%;background:${CHART.red}"></div>
+          <div class="h-label">${String(h).padStart(2,'0')}</div>
+        </div>`;
+      });
+      hHtml += '</div>';
+      const hEl = document.getElementById('breachHourChart');
+      if(hEl) hEl.innerHTML = hHtml;
+
+      // Auto insight: top queue + hour combination
+      const qhMap = {};
+      breaches.forEach(r => {
+        if(!r._dt) return;
+        const q = shortQ(cell(r,'queue') || 'Unknown').trim();
+        const h = r._dt.getHours();
+        const key = q + '|' + h;
+        qhMap[key] = (qhMap[key] || 0) + 1;
+      });
+      const qhEntries = Object.entries(qhMap).sort((a,b) => b[1]-a[1]);
+      if(insightEl && qhEntries.length){
+        const [topKey, topCount] = qhEntries[0];
+        const [topQ, topH] = topKey.split('|');
+        const topHNum = Number(topH);
+        const nextHour = (topHNum + 1) % 24;
+        const topQEntry = qEntries[0];
+        const topDEntry = dEntries[0];
+        insightEl.innerHTML = `<div class="hd-narrative" style="margin-top:14px;">
+          🔎 <strong>Likely root cause:</strong> the <strong>${escHtml(topQ)}</strong> queue between <strong>${String(topHNum).padStart(2,'0')}:00–${String(nextHour).padStart(2,'0')}:00</strong> accounts for the single largest concentration of breaches (${topCount} of ${breaches.length}, ${pct(topCount/breaches.length)}) — likely understaffed during that window.
+          Overall, <strong>${escHtml(shortQ(topQEntry[0]))}</strong> is the most breach-prone queue (${topQEntry[1]} breaches), and <strong>${escHtml(topDEntry[0])}</strong> disconnects are the leading reason (${topDEntry[1]} breaches).
+        </div>`;
+      } else if(insightEl){
+        insightEl.innerHTML = '';
+      }
     }
 
     // ── FILE HANDLING ──

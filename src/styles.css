@@ -1,4 +1,4 @@
-    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap');
 
     :root{
       --rail-bg:#16191F;
@@ -362,6 +362,44 @@
     /* Empty state */
     .empty-state{padding:32px 16px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:11px;}
     .empty-state .ei{font-size:28px;margin-bottom:10px;opacity:.4;}
+
+    /* ── WEEKLY HEATMAP (Day-of-Week x Hour-of-Day) ── */
+    .heatmap-wrap{overflow-x:auto;padding-bottom:4px;}
+    .heatmap-grid{display:grid;grid-template-columns:40px repeat(24,minmax(22px,1fr));gap:2px;min-width:680px;}
+    .hm-cell{display:flex;align-items:center;justify-content:center;font-size:8px;font-family:var(--mono);color:var(--ink);height:20px;border-radius:2px;white-space:nowrap;}
+    .hm-corner{background:transparent;}
+    .hm-hlabel{color:var(--muted);height:14px;}
+    .hm-dlabel{color:var(--muted);font-weight:600;justify-content:flex-start;padding-left:2px;}
+    .hm-data{cursor:default;transition:transform .1s,outline .1s;position:relative;}
+    .hm-data:hover{transform:scale(1.18);outline:1px solid var(--ink);z-index:2;}
+    .hm-peak{outline:2px solid var(--chart-red);outline-offset:-1px;}
+    .hm-insight{margin-top:10px;font-size:11px;font-family:var(--mono);color:var(--ink);background:var(--surface-2);padding:8px 10px;border-radius:5px;border:1px solid var(--line);}
+    .hm-legend{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:9.5px;font-family:var(--mono);color:var(--muted);}
+    .hm-legend-scale{display:flex;height:10px;border-radius:2px;overflow:hidden;width:120px;}
+    .hm-legend-scale span{flex:1;height:100%;}
+
+    /* ── LEADERBOARD (Top Performers) ── */
+    .lb-columns{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+    .lb-col{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:10px;}
+    .lb-col h4{margin:0 0 8px;font-size:10.5px;font-weight:600;color:var(--muted);font-family:var(--mono);letter-spacing:.05em;text-transform:uppercase;padding-bottom:6px;border-bottom:1px solid var(--line);}
+    .lb-row{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 4px;border-radius:4px;font-family:var(--mono);}
+    .lb-row:not(:last-child){border-bottom:1px solid var(--line);}
+    .lb-rank{font-size:13px;text-align:center;font-weight:700;color:var(--muted);}
+    .lb-name{font-size:11.5px;color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .lb-value{font-size:12px;font-weight:700;color:var(--ink);text-align:right;}
+    .lb-sub{grid-column:2/4;font-size:9.5px;color:var(--muted);margin-top:-2px;}
+    .lb-coach .lb-value{color:var(--warn);}
+    .lb-sla .lb-value{color:var(--ok);}
+    .lb-note{margin-top:8px;font-size:10px;color:var(--muted);font-family:var(--mono);font-style:italic;}
+    @media(max-width:1180px){.lb-columns{grid-template-columns:1fr;}}
+
+    /* ── MINI KPI (light-theme stat cards used inside insight panels) ── */
+    .mini-kpis{display:grid;gap:8px;margin-bottom:4px;}
+    .mini-kpi{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:10px 12px;}
+    .mini-kpi-label{font-size:9.5px;color:var(--muted);font-family:var(--mono);font-weight:600;letter-spacing:.07em;text-transform:uppercase;}
+    .mini-kpi-value{font-size:20px;font-weight:700;color:var(--ink);font-family:var(--mono);margin-top:2px;}
+    .mini-kpi-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+    @media(max-width:1180px){.mini-kpis{grid-template-columns:repeat(2,1fr) !important;}}
 
     /* Day Comparator */
     .comparator-controls{display:flex;align-items:flex-end;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
