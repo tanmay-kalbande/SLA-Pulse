@@ -1633,4 +1633,6 @@ document.body.innerHTML = appTemplate;
       downloadText('SLA_Summary.csv',summary,'text/csv');
     });
 
+    document.getElementById('analyticsBtn').addEventListener('click', openAnalytics);
+
 Object.assign(window, { openDayDrawer });
