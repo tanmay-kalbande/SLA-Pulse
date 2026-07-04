@@ -1,1 +1,4 @@
-*.jpg
+node_modules
+dist
+out-root
+*.log
