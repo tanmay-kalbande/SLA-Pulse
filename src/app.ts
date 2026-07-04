@@ -995,6 +995,10 @@ document.body.innerHTML = appTemplate;
       analyticsBuilt=false;
       setBadge(rows.length.toLocaleString()+' rows');
       setStatus('ready — '+dateLabel(latest)+'.','ok');
+      
+      buildLeaderboard(allMappedRows);
+      buildWeeklyHeatmap(allMappedRows);
+      buildBreachAnalysis(allMappedRows);
     }
 
     function resetKPIs(){
@@ -1632,7 +1636,5 @@ document.body.innerHTML = appTemplate;
       ].join('\n');
       downloadText('SLA_Summary.csv',summary,'text/csv');
     });
-
-    document.getElementById('analyticsBtn').addEventListener('click', openAnalytics);
 
 Object.assign(window, { openDayDrawer });
