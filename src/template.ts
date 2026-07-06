@@ -139,7 +139,7 @@ export const appTemplate = `
             <button class="df-btn ghost" id="clearBreachFilter">Clear</button>
             <span class="filter-info" id="breachFilterInfo">All RCA data</span>
           </div>
-          <div class="mini-kpis" id="breachKpis" style="grid-template-columns:repeat(2,1fr);">
+          <div class="mini-kpis collapsed-empty" id="breachKpis" style="grid-template-columns:repeat(2,1fr);">
             <div class="empty-state"><div class="ei">RCA</div><p>Upload a CSV on the main screen to load data.</p></div>
           </div>
           <div id="breachInsight"></div>
