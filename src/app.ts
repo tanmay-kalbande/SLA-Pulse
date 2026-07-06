@@ -28,6 +28,16 @@ document.body.innerHTML = appTemplate;
     let allMappedRows = [];
     let currentFilterFrom = null;
     let currentFilterTo = null;
+    let breachFilterFrom = null;
+    let breachFilterTo = null;
+    let breachTimeFrom = null;
+    let breachTimeTo = null;
+    let breachFilterApplied = false;
+    let heatmapFilterFrom = null;
+    let heatmapFilterTo = null;
+    let heatmapTimeFrom = null;
+    let heatmapTimeTo = null;
+    let heatmapFilterApplied = false;
 
     // ── NEW CHART PALETTE ──
     // Purposeful: green=good/GOS, red=bad/abandon, blue/purple/teal=neutral categories
@@ -133,6 +143,41 @@ document.body.innerHTML = appTemplate;
     function num(v){ const n=Number(String(v??'').replace(/,/g,'')); return isNaN(n)?0:n; }
     function fmt(n){ return Number(n||0).toLocaleString(); }
     function fmtSec(ms){ const s=ms/1000; if(s<60)return`${s.toFixed(0)}s`; const m=s/60; return`${m.toFixed(1)}m`; }
+    function heatColor(norm){
+      const n = Math.max(0, Math.min(1, Number(norm) || 0));
+      if(n === 0) return 'var(--surface-2)';
+      const stops = [
+        {p:0.1, c:[30,58,138]},
+        {p:0.4, c:[37,99,235]},
+        {p:0.7, c:[56,189,248]},
+        {p:1, c:[186,230,253]},
+      ];
+      let prev = stops[0];
+      for(const stop of stops){
+        if(n <= stop.p){
+          const span = Math.max(stop.p - prev.p, 0.001);
+          const t = Math.max(0, Math.min(1, (n - prev.p) / span));
+          const rgb = stop.c.map((v, i) => Math.round(prev.c[i] + (v - prev.c[i]) * t));
+          return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+        }
+        prev = stop;
+      }
+      return 'rgb(239,68,68)';
+    }
+    function fmtMinSec(ms){
+      if(!isFinite(ms) || ms <= 0) return '-';
+      const total = Math.round(ms / 1000);
+      const minutes = Math.floor(total / 60);
+      const seconds = total % 60;
+      return `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+    }
+    function ahtClass(ms){
+      if(!isFinite(ms) || ms <= 0) return 'neutral';
+      const seconds = ms / 1000;
+      if(seconds <= 180) return 'aht-fast';
+      if(seconds <= 360) return 'aht-normal';
+      return 'aht-slow';
+    }
     function isVoice(r){ return String(cell(r,'mediaType')).toLowerCase()==='voice'; }
     function isCallback(r){ return String(cell(r,'mediaType')).toLowerCase()==='callback'; }
     function isHandled(r){ return String(cell(r,'abandoned')).toUpperCase()==='NO'; }
@@ -151,6 +196,158 @@ document.body.innerHTML = appTemplate;
         if(currentFilterTo && r._dt > currentFilterTo) return false;
         return true;
       });
+    }
+    function minutesFromInput(value){
+      if(!value) return null;
+      const [h, m] = value.split(':').map(Number);
+      if(!isFinite(h) || !isFinite(m)) return null;
+      return h * 60 + m;
+    }
+    function parseTypedDate(value){
+      const v = String(value || '').trim();
+      if(!v) return null;
+      const normalized = v.replace(/\s+/g, '').replace(/[.]/g, '/');
+      let m = normalized.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+      if(m){
+        const day = Number(m[1]);
+        const month = Number(m[2]);
+        const year = Number(m[3]);
+        const d = new Date(year, month - 1, day);
+        if(d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
+        return null;
+      }
+      m = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if(m){
+        const year = Number(m[1]);
+        const month = Number(m[2]);
+        const day = Number(m[3]);
+        const d = new Date(year, month - 1, day);
+        if(d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day) return d;
+      }
+      return null;
+    }
+    function syncSegmentedDate(wrap){
+      const target = document.getElementById(wrap.dataset.dateTarget);
+      const day = wrap.querySelector('[data-part="day"]').value;
+      const month = wrap.querySelector('[data-part="month"]').value;
+      const year = wrap.querySelector('[data-part="year"]').value;
+      target.value = day || month || year ? `${day}/${month}/${year}` : '';
+    }
+    function fillSegmentedDate(id, dateObj){
+      const wrap = document.querySelector(`.date-segments[data-date-target="${id}"]`);
+      if(!wrap) return;
+      wrap.querySelector('[data-part="day"]').value = String(dateObj.getDate()).padStart(2, '0');
+      wrap.querySelector('[data-part="month"]').value = String(dateObj.getMonth() + 1).padStart(2, '0');
+      wrap.querySelector('[data-part="year"]').value = String(dateObj.getFullYear());
+      syncSegmentedDate(wrap);
+    }
+    function clearSegmentedDate(id){
+      const wrap = document.querySelector(`.date-segments[data-date-target="${id}"]`);
+      if(!wrap) return;
+      wrap.querySelectorAll('.date-part').forEach(input=>input.value='');
+      document.getElementById(id).value = '';
+    }
+    document.querySelectorAll('.date-segments').forEach(wrap=>{
+      const parts = Array.from(wrap.querySelectorAll('.date-part'));
+      parts.forEach((input, idx)=>{
+        input.addEventListener('input',()=>{
+          input.value = input.value.replace(/\D/g, '').slice(0, Number(input.maxLength) || 2);
+          syncSegmentedDate(wrap);
+          if(input.value.length >= Number(input.maxLength) && parts[idx + 1]) parts[idx + 1].focus();
+        });
+        input.addEventListener('keydown',e=>{
+          if(e.key === 'Backspace' && !input.value && parts[idx - 1]) parts[idx - 1].focus();
+        });
+        input.addEventListener('paste',e=>{
+          const digits = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 8);
+          if(digits.length <= Number(input.maxLength)) return;
+          e.preventDefault();
+          parts[0].value = digits.slice(0, 2);
+          parts[1].value = digits.slice(2, 4);
+          parts[2].value = digits.slice(4, 8);
+          syncSegmentedDate(wrap);
+          parts[Math.min(2, parts.findIndex(p=>!p.value) === -1 ? 2 : parts.findIndex(p=>!p.value))].focus();
+        });
+      });
+    });
+    function composeDateTime(dateText, timeText, fallbackTime){
+      const d = parseTypedDate(dateText);
+      if(!d) return null;
+      const time = timeText || fallbackTime;
+      const [h, m] = time.split(':').map(Number);
+      d.setHours(isFinite(h) ? h : 0, isFinite(m) ? m : 0, fallbackTime === '23:59' ? 59 : 0, 0);
+      return d;
+    }
+    function clearHeatmapPanel(message = 'Select a date range and click Apply to generate the heatmap.'){
+      const info = document.getElementById('heatmapFilterInfo');
+      if(info) info.textContent = 'Waiting for date range';
+      const el = document.getElementById('weeklyHeatmap');
+      if(el) el.innerHTML = `<div class="empty-state compact-empty"><div class="ei">Heat</div><p>${message}</p></div>`;
+    }
+    function clearBreachPanel(message = 'Select a date range and click Apply to generate RCA.'){
+      const info = document.getElementById('breachFilterInfo');
+      if(info) info.textContent = 'Waiting for date range';
+      const kpiEl = document.getElementById('breachKpis');
+      if(kpiEl){
+        kpiEl.classList.add('collapsed-empty');
+        kpiEl.innerHTML = `<div class="empty-state compact-empty"><div class="ei">RCA</div><p>${message}</p></div>`;
+      }
+      document.querySelectorAll('.breach-detail-panel').forEach(panel=>panel.classList.add('is-hidden'));
+      ['breachQueueChart','breachDisconnectChart','breachAgentChart','breachHourChart'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.innerHTML = '';
+      });
+      const insight = document.getElementById('breachInsight');
+      if(insight) insight.innerHTML = '';
+    }
+    function getRowsByDateTime(rows, fromDate, toDate, fromMinute, toMinute){
+      if(!fromDate && !toDate && fromMinute === null && toMinute === null) return rows;
+      return rows.filter(r=>{
+        if(!r._dt) return false;
+        if(fromDate && r._dt < fromDate) return false;
+        if(toDate && r._dt > toDate) return false;
+        if(fromMinute !== null || toMinute !== null){
+          const mins = r._dt.getHours() * 60 + r._dt.getMinutes();
+          const from = fromMinute ?? 0;
+          const to = toMinute ?? 1439;
+          if(from <= to){
+            if(mins < from || mins > to) return false;
+          } else if(mins < from && mins > to) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+    function getBreachFilteredRows(rows){
+      return getRowsByDateTime(rows, breachFilterFrom, breachFilterTo, breachTimeFrom, breachTimeTo);
+    }
+    function getHeatmapFilteredRows(rows){
+      return getRowsByDateTime(rows, heatmapFilterFrom, heatmapFilterTo, heatmapTimeFrom, heatmapTimeTo);
+    }
+    function refreshHeatmap(baseRows = allMappedRows){
+      if(!heatmapFilterApplied){
+        clearHeatmapPanel();
+        return;
+      }
+      const filtered = getHeatmapFilteredRows(baseRows);
+      const info = document.getElementById('heatmapFilterInfo');
+      if(info){
+        info.textContent = filtered.length + ' rows in heatmap range';
+      }
+      buildWeeklyHeatmap(filtered);
+    }
+    function refreshBreachAnalysis(baseRows = allMappedRows){
+      if(!breachFilterApplied){
+        clearBreachPanel();
+        return;
+      }
+      const filtered = getBreachFilteredRows(baseRows);
+      const info = document.getElementById('breachFilterInfo');
+      if(info){
+        info.textContent = filtered.length + ' rows in RCA range';
+      }
+      buildSlaBreachAnalysis(filtered);
     }
     document.getElementById('applyFilter').addEventListener('click',()=>{
       const fv = document.getElementById('filterFrom').value;
@@ -171,9 +368,75 @@ document.body.innerHTML = appTemplate;
       rebuildAnalytics(allMappedRows);
     });
 
+    document.getElementById('applyHeatmapFilter').addEventListener('click',()=>{
+      const fd = document.getElementById('heatmapFromDate').value;
+      const ft = document.getElementById('heatmapFromTime').value;
+      const td = document.getElementById('heatmapToDate').value;
+      const tt = document.getElementById('heatmapToTime').value;
+      if(!fd && !td){
+        heatmapFilterApplied = false;
+        clearHeatmapPanel('Type at least one date, then click Apply.');
+        return;
+      }
+      heatmapFilterFrom = fd ? composeDateTime(fd, ft, '00:00') : null;
+      heatmapFilterTo = td ? composeDateTime(td, tt, '23:59') : null;
+      if((fd && !heatmapFilterFrom) || (td && !heatmapFilterTo)){
+        heatmapFilterApplied = false;
+        clearHeatmapPanel('Use date format dd/mm/yyyy, then click Apply.');
+        return;
+      }
+      heatmapTimeFrom = null;
+      heatmapTimeTo = null;
+      heatmapFilterApplied = true;
+      refreshHeatmap(getFilteredRows(allMappedRows));
+    });
+    document.getElementById('clearHeatmapFilter').addEventListener('click',()=>{
+      heatmapFilterFrom = null;
+      heatmapFilterTo = null;
+      heatmapTimeFrom = null;
+      heatmapTimeTo = null;
+      heatmapFilterApplied = false;
+      ['heatmapFromDate','heatmapToDate'].forEach(clearSegmentedDate);
+      ['heatmapFromTime','heatmapToTime'].forEach(id=>document.getElementById(id).value='');
+      refreshHeatmap(getFilteredRows(allMappedRows));
+    });
+
+    document.getElementById('applyBreachFilter').addEventListener('click',()=>{
+      const fd = document.getElementById('breachFromDate').value;
+      const ft = document.getElementById('breachFromTime').value;
+      const td = document.getElementById('breachToDate').value;
+      const tt = document.getElementById('breachToTime').value;
+      if(!fd && !td){
+        breachFilterApplied = false;
+        clearBreachPanel('Type at least one date, then click Apply.');
+        return;
+      }
+      breachFilterFrom = fd ? composeDateTime(fd, ft, '00:00') : null;
+      breachFilterTo = td ? composeDateTime(td, tt, '23:59') : null;
+      if((fd && !breachFilterFrom) || (td && !breachFilterTo)){
+        breachFilterApplied = false;
+        clearBreachPanel('Use date format dd/mm/yyyy, then click Apply.');
+        return;
+      }
+      breachTimeFrom = null;
+      breachTimeTo = null;
+      breachFilterApplied = true;
+      refreshBreachAnalysis(getFilteredRows(allMappedRows));
+    });
+    document.getElementById('clearBreachFilter').addEventListener('click',()=>{
+      breachFilterFrom = null;
+      breachFilterTo = null;
+      breachTimeFrom = null;
+      breachTimeTo = null;
+      breachFilterApplied = false;
+      ['breachFromDate','breachToDate'].forEach(clearSegmentedDate);
+      ['breachFromTime','breachToTime'].forEach(id=>document.getElementById(id).value='');
+      refreshBreachAnalysis(getFilteredRows(allMappedRows));
+    });
+
 
     // ── TOAST HELPER ──
-    function showToast(msg){
+    function showToast(msg, title='No data for today', icon='⚠️'){
       const container=document.getElementById('toastContainer');
       // remove any existing toast first
       const old=container.querySelector('.toast');
@@ -183,9 +446,9 @@ document.body.innerHTML = appTemplate;
       t.setAttribute('role','alert');
       t.setAttribute('aria-live','assertive');
       t.innerHTML=`
-        <span class="toast-icon">⚠️</span>
+        <span class="toast-icon">${icon}</span>
         <div class="toast-content">
-          <div class="toast-title">No data for today</div>
+          <div class="toast-title">${title}</div>
           <div class="toast-msg">${msg}</div>
         </div>
         <button class="toast-dismiss" title="Dismiss" aria-label="Dismiss">✕</button>`;
@@ -194,6 +457,7 @@ document.body.innerHTML = appTemplate;
       requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
       // dismiss button — manual only
       t.querySelector('.toast-dismiss').addEventListener('click',()=>dismissToast(t));
+      if(icon==='✅') setTimeout(()=>{ if(container.contains(t)) dismissToast(t); }, 3000);
     }
     function dismissToast(t){
       t.classList.add('hide');
@@ -203,6 +467,7 @@ document.body.innerHTML = appTemplate;
     // ── ANALYTICS OVERLAY ──
     function openAnalytics(){
       document.getElementById('analyticsOverlay').classList.add('open');
+      document.querySelector('.analytics-body').scrollTop = 0;
       if(allMappedRows.length && !analyticsBuilt){
         rebuildAnalytics(getFilteredRows(allMappedRows));
         analyticsBuilt=true;
@@ -211,6 +476,7 @@ document.body.innerHTML = appTemplate;
     document.getElementById('analyticsClose').addEventListener('click',()=>{
       document.getElementById('analyticsOverlay').classList.remove('open');
     });
+    document.getElementById('insightsBtn').addEventListener('click', openAnalytics);
 
     document.querySelectorAll('.a-tab').forEach(btn=>{
       btn.addEventListener('click',()=>{
@@ -287,13 +553,15 @@ document.body.innerHTML = appTemplate;
       let cumH = 0, cumS = 0;
       let body = `<div class="drawer-section"><h4>Daily Performance — click a date for deep insights</h4>
         <table class="day-table"><thead><tr>
-          <th>Date</th><th>Offered</th><th>Handled</th><th>Day GOS</th><th>Running GOS</th><th>Δ</th><th>Agents</th>
+          <th>Date</th><th>Offered</th><th>Handled</th><th>Avg AHT</th><th>Day GOS</th><th>Running GOS</th><th>Δ</th><th>Agents</th>
         </tr></thead><tbody>`;
 
       days.forEach(([k, {dt, rows: dayRows}]) => {
         const voice = dayRows.filter(isVoice);
         const handled = voice.filter(isHandled);
         const inSla = handled.filter(r => num(cell(r,'totalQueue')) <= ANSWER_SLA_MS);
+        const handleTimes = handled.map(r => num(cell(r,'totalHandle'))).filter(v => v > 0);
+        const avgAht = handleTimes.length ? handleTimes.reduce((s, v) => s + v, 0) / handleTimes.length : 0;
         const dayGos = handled.length ? inSla.length / handled.length : null;
         const gosClass = dayGos === null ? 'neutral' : dayGos >= 0.8 ? 'ok' : dayGos >= 0.6 ? 'warn' : 'err';
 
@@ -326,6 +594,7 @@ document.body.innerHTML = appTemplate;
         body += `<tr class="clickable-row" onclick="openDayDrawer('${k}', true)">
           <td style="font-weight:600;color:var(--ink)">${dayLabel(dt)} 🔍</td>
           <td>${dayRows.length}</td><td>${handled.length}</td>
+          <td><span class="pill ${ahtClass(avgAht)}">${fmtMinSec(avgAht)}</span></td>
           <td><span class="pill ${gosClass}">${dayGos !== null ? pct(dayGos) : '-'}</span></td>
           <td><span class="pill ${runClass}">${runGos !== null ? pct(runGos) : '-'}</span></td>
           <td>${deltaHtml}</td>
@@ -996,9 +1265,20 @@ document.body.innerHTML = appTemplate;
       setBadge(rows.length.toLocaleString()+' rows');
       setStatus('ready — '+dateLabel(latest)+'.','ok');
       
+      // Default filters to last 2 days present in data
+      const latestEndOfDay = new Date(latest); latestEndOfDay.setHours(23,59,59,999);
+      const latestStart = new Date(latest); latestStart.setHours(0,0,0,0);
+      const prevDayStart = new Date(latestStart); prevDayStart.setDate(prevDayStart.getDate() - 1);
+      
+      heatmapFilterFrom = prevDayStart; heatmapFilterTo = latestEndOfDay; heatmapFilterApplied = true;
+      breachFilterFrom = prevDayStart; breachFilterTo = latestEndOfDay; breachFilterApplied = true;
+      
+      fillSegmentedDate('heatmapFromDate', heatmapFilterFrom); fillSegmentedDate('heatmapToDate', heatmapFilterTo);
+      fillSegmentedDate('breachFromDate', breachFilterFrom); fillSegmentedDate('breachToDate', breachFilterTo);
+      
       buildLeaderboard(allMappedRows);
-      buildWeeklyHeatmap(allMappedRows);
-      buildBreachAnalysis(allMappedRows);
+      refreshHeatmap(allMappedRows);
+      refreshBreachAnalysis(allMappedRows);
     }
 
     function resetKPIs(){
@@ -1011,6 +1291,9 @@ document.body.innerHTML = appTemplate;
     // ── REBUILD ANALYTICS (respects date filter) ──
     function rebuildAnalytics(rows){
       if(!rows||!rows.length) return;
+      buildLeaderboard(rows);
+      refreshHeatmap(rows);
+      refreshBreachAnalysis(rows);
       buildDayInsights(rows);
       buildAgentInsights(rows);
       buildQueueInsights(rows);
@@ -1237,7 +1520,22 @@ document.body.innerHTML = appTemplate;
       const el = document.getElementById('leaderboardWrap');
       if(!el) return;
       const MIN_CALLS = 5; // minimum handled calls to qualify for ranking, avoids 1-call 100% flukes
-      const agentMap = window._agentMap || {};
+      const agentMap = {};
+      rows.forEach(r => {
+        const rawUsers = String(cell(r, 'users') || '').trim();
+        if(!rawUsers) return;
+        rawUsers.split(';').map(u => u.trim()).filter(Boolean).forEach(agent => {
+          if(!agentMap[agent]) agentMap[agent] = {total:0, handled:0, handledInSla:0, handleMs:[]};
+          const a = agentMap[agent];
+          a.total++;
+          if(isHandled(r)){
+            a.handled++;
+            if(isVoice(r) && num(cell(r,'totalQueue')) <= ANSWER_SLA_MS) a.handledInSla++;
+            const h = num(cell(r,'totalHandle'));
+            if(h > 0) a.handleMs.push(h);
+          }
+        });
+      });
       const agents = Object.entries(agentMap).map(([name, a]) => {
         const slaR = a.handled ? a.handledInSla / a.handled : 0;
         const avgHandle = a.handleMs.length ? a.handleMs.reduce((s, v) => s + v, 0) / a.handleMs.length : 0;
@@ -1424,26 +1722,35 @@ document.body.innerHTML = appTemplate;
     function buildWeeklyHeatmap(rows){
       const el = document.getElementById('weeklyHeatmap');
       if(!el) return;
-      const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-      // matrix[dayOfWeek][hour] = {total, abandoned}
-      const matrix = Array.from({length:7}, () => Array.from({length:24}, () => ({total:0, abandoned:0})));
-
+      
+      const dateMap = {};
       rows.forEach(r=>{
         if(!r._dt) return;
-        const dow = (r._dt.getDay() + 6) % 7; // 0=Mon ... 6=Sun
+        const dk = dateKey(r._dt);
+        if(!dateMap[dk]) {
+          dateMap[dk] = {
+            label: r._dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'}),
+            hours: Array.from({length:24}, () => ({total:0, abandoned:0}))
+          };
+        }
         const hr = r._dt.getHours();
-        matrix[dow][hr].total++;
-        if(isAbandoned(r)) matrix[dow][hr].abandoned++;
+        dateMap[dk].hours[hr].total++;
+        if(isAbandoned(r)) dateMap[dk].hours[hr].abandoned++;
+      });
+      
+      const sortedKeys = Object.keys(dateMap).sort();
+      
+      let maxCount = 0;
+      let peak = {key:'', hour:0, total:0, abandoned:0};
+      
+      sortedKeys.forEach(k => {
+        dateMap[k].hours.forEach((c,h)=>{
+          if(c.total > maxCount) maxCount = c.total;
+          if(c.total > peak.total) peak = {key:k, hour:h, total:c.total, abandoned:c.abandoned};
+        });
       });
 
-      let maxCount = 0;
-      let peak = {day:0, hour:0, total:0, abandoned:0};
-      matrix.forEach((row,d)=>row.forEach((c,h)=>{
-        if(c.total > maxCount) maxCount = c.total;
-        if(c.total > peak.total) peak = {day:d, hour:h, total:c.total, abandoned:c.abandoned};
-      }));
-
-      if(maxCount === 0){
+      if(maxCount === 0 || sortedKeys.length === 0){
         el.innerHTML = '<div class="empty-state"><div class="ei">🔥</div><p>No data.</p></div>';
         return;
       }
@@ -1453,23 +1760,25 @@ document.body.innerHTML = appTemplate;
       for(let h=0; h<24; h++){
         html += `<div class="hm-cell hm-hlabel">${h % 3 === 0 ? String(h).padStart(2,'0') : ''}</div>`;
       }
-      matrix.forEach((row,d)=>{
-        html += `<div class="hm-cell hm-dlabel">${DAYS[d]}</div>`;
-        row.forEach((c,h)=>{
+      
+      sortedKeys.forEach(k => {
+        html += `<div class="hm-cell hm-dlabel">${dateMap[k].label}</div>`;
+        dateMap[k].hours.forEach((c,h)=>{
           const norm = c.total / maxCount;
-          const isPeak = (d === peak.day && h === peak.hour);
+          const isPeak = (k === peak.key && h === peak.hour);
           const abRate = c.total ? c.abandoned / c.total : 0;
-          const bg = c.total === 0 ? 'var(--surface-2)' : `rgba(59,130,246,${(0.08 + 0.82 * norm).toFixed(2)})`;
-          const showLabel = c.total > 0 && norm > 0.55;
-          html += `<div class="hm-cell hm-data${isPeak ? ' hm-peak' : ''}" style="background:${bg}" title="${DAYS[d]} ${String(h).padStart(2,'0')}:00 — ${c.total} calls, ${pct(abRate)} abandoned">${showLabel ? c.total : ''}</div>`;
+          const bg = heatColor(norm);
+          const showLabel = c.total > 0;
+          const textColor = norm > 0.6 ? '#0f172a' : '#f8fafc';
+          html += `<div class="hm-cell hm-data${isPeak ? ' hm-peak' : ''}" style="background:${bg}; color:${textColor}" title="${dateMap[k].label} ${String(h).padStart(2,'0')}:00 — ${c.total} calls, ${pct(abRate)} abandoned">${showLabel ? c.total : ''}</div>`;
         });
       });
       html += '</div></div>';
 
       const peakAbRate = peak.total ? peak.abandoned / peak.total : 0;
       const nextHour = (peak.hour + 1) % 24;
-      html += `<div class="hm-insight">📍 Busiest slot: <strong>${DAYS[peak.day]} ${String(peak.hour).padStart(2,'0')}:00–${String(nextHour).padStart(2,'0')}:00</strong> with <strong>${peak.total}</strong> calls (${pct(peakAbRate)} abandoned). Staff up around this window first.</div>`;
-      html += `<div class="hm-legend">Lighter = quieter <div class="hm-legend-scale"><span style="background:rgba(59,130,246,0.08)"></span><span style="background:rgba(59,130,246,0.3)"></span><span style="background:rgba(59,130,246,0.55)"></span><span style="background:rgba(59,130,246,0.8)"></span><span style="background:rgba(59,130,246,0.95)"></span></div> Darker = busier</div>`;
+      html += `<div class="hm-insight">📍 Busiest slot: <strong>${dateMap[peak.key].label} ${String(peak.hour).padStart(2,'0')}:00–${String(nextHour).padStart(2,'0')}:00</strong> with <strong>${peak.total}</strong> calls (${pct(peakAbRate)} abandoned). Staff up around this window first.</div>`;
+      html += `<div class="hm-legend">Lower volume <div class="hm-legend-scale"><span style="background:#1e3a8a"></span><span style="background:#2563eb"></span><span style="background:#38bdf8"></span><span style="background:#bae6fd"></span></div> Higher volume</div>`;
 
       el.innerHTML = html;
     }
@@ -1478,6 +1787,7 @@ document.body.innerHTML = appTemplate;
     function buildSlaBreachAnalysis(rows){
       const kpiEl = document.getElementById('breachKpis');
       if(!kpiEl) return;
+      kpiEl.classList.remove('collapsed-empty');
 
       const voice = rows.filter(isVoice);
       const outSla = voice.filter(r => isHandled(r) && num(cell(r,'totalQueue')) > ANSWER_SLA_MS);
@@ -1492,10 +1802,11 @@ document.body.innerHTML = appTemplate;
         {label:'Abandoned Late', value: fmt(abLate.length), sub: '> 20s, caller hung up'},
       ].map(k => `<div class="mini-kpi"><div class="mini-kpi-label">${k.label}</div><div class="mini-kpi-value">${k.value}</div><div class="mini-kpi-sub">${k.sub}</div></div>`).join('');
 
-      const ids = ['breachQueueChart','breachDisconnectChart','breachWrapupChart','breachHourChart'];
+      const ids = ['breachQueueChart','breachDisconnectChart','breachAgentChart','breachHourChart'];
       const insightEl = document.getElementById('breachInsight');
 
       if(!breaches.length){
+        document.querySelectorAll('.breach-detail-panel').forEach(panel=>panel.classList.add('is-hidden'));
         ids.forEach(id => {
           const e = document.getElementById(id);
           if(e) e.innerHTML = '<div class="empty-state"><div class="ei">🎉</div><p>No SLA breaches in this range.</p></div>';
@@ -1503,6 +1814,7 @@ document.body.innerHTML = appTemplate;
         if(insightEl) insightEl.innerHTML = '';
         return;
       }
+      document.querySelectorAll('.breach-detail-panel').forEach(panel=>panel.classList.remove('is-hidden'));
 
       function shortQ(n){ return String(n).replace('GL MATALAN ','').replace(' EN',''); }
 
@@ -1530,16 +1842,49 @@ document.body.innerHTML = appTemplate;
         return `<div class="bar-row"><div class="bar-label">${escHtml(name)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div><div class="bar-val">${count} (${pct(count/breaches.length)})</div></div>`;
       }).join('');
 
-      // By Wrap-up code
-      const wMap = {};
-      breaches.forEach(r => { const w = String(cell(r,'wrapup') || '').trim() || 'No Wrap-up'; wMap[w] = (wMap[w] || 0) + 1; });
-      const wEntries = Object.entries(wMap).sort((a,b) => b[1]-a[1]);
-      const wMax = wEntries.length ? wEntries[0][1] : 1;
-      const wEl = document.getElementById('breachWrapupChart');
-      if(wEl) wEl.innerHTML = wEntries.map(([name,count],i) => {
-        const w = (count/wMax*100).toFixed(1);
-        return `<div class="bar-row"><div class="bar-label" title="${escHtml(name)}">${escHtml(name)}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${MULTI[i%MULTI.length]}"></div></div><div class="bar-val">${count} (${pct(count/breaches.length)})</div></div>`;
-      }).join('');
+      // By Agent (Donut Chart)
+      const aMap = {};
+      breaches.forEach(r => { const a = String(cell(r,'users') || '').trim() || 'Unknown Agent'; aMap[a] = (aMap[a] || 0) + 1; });
+      const aEntries = Object.entries(aMap).sort((a,b) => b[1]-a[1]);
+      const aTotal = breaches.length || 1;
+      
+      let aHtml = '<div style="display:flex;gap:24px;align-items:center;padding:8px 0;">';
+      if(aEntries.length === 0) {
+        aHtml = '<div class="empty-state"><p>No data yet.</p></div>';
+      } else {
+        // Build conic gradient string
+        let conic = [];
+        let currentPct = 0;
+        aEntries.forEach(([name, count], i) => {
+           const p = (count / aTotal) * 100;
+           const color = MULTI[i % MULTI.length];
+           conic.push(`${color} ${currentPct}% ${currentPct + p}%`);
+           currentPct += p;
+        });
+        
+        // Donut circle
+        aHtml += `<div style="width:130px;height:130px;border-radius:50%;background:conic-gradient(${conic.join(', ')});position:relative;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+          <div style="position:absolute;inset:28px;background:var(--surface);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:var(--ink);box-shadow:inset 0 2px 6px rgba(0,0,0,0.05);">${aEntries.length}
+          <span style="font-size:9px;color:var(--muted);font-weight:500;text-transform:uppercase;margin-top:2px;">Agents</span></div>
+        </div>`;
+        
+        // Legend List
+        aHtml += '<div style="flex:1;display:flex;flex-direction:column;gap:8px;max-height:140px;overflow-y:auto;padding-right:4px;">';
+        aEntries.forEach(([name, count], i) => {
+           const pctStr = ((count/aTotal)*100).toFixed(1);
+           const color = MULTI[i % MULTI.length];
+           aHtml += `<div style="display:flex;align-items:center;font-size:11.5px;font-family:var(--sans);color:var(--ink);">
+             <span style="width:10px;height:10px;border-radius:3px;background:${color};margin-right:10px;flex-shrink:0;"></span>
+             <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(name)}">${escHtml(name)}</span>
+             <span style="margin-left:8px;font-weight:600;font-family:var(--mono);">${count}</span>
+             <span style="margin-left:8px;color:var(--muted);width:36px;text-align:right;font-family:var(--mono);">${pctStr}%</span>
+           </div>`;
+        });
+        aHtml += '</div></div>';
+      }
+      
+      const aEl = document.getElementById('breachAgentChart');
+      if(aEl) aEl.innerHTML = aHtml;
 
       // By Hour of day
       const hMap = Array.from({length:24}, () => 0);
@@ -1594,10 +1939,11 @@ document.body.innerHTML = appTemplate;
       calculate();
     }
     document.getElementById('fileInput').addEventListener('change',e=>handleFile(e.target.files[0]));
-    const uploadBox=document.getElementById('uploadBox');
+        const uploadBox=document.getElementById('uploadBox');
     uploadBox.addEventListener('dragover',e=>{ e.preventDefault(); uploadBox.classList.add('dragging'); });
     uploadBox.addEventListener('dragleave',()=>uploadBox.classList.remove('dragging'));
     uploadBox.addEventListener('drop',e=>{ e.preventDefault(); uploadBox.classList.remove('dragging'); handleFile(e.dataTransfer.files[0]); });
+
 
     // ── EXPORT BUTTONS ──
     function downloadText(filename,text,type='text/plain'){
@@ -1607,10 +1953,10 @@ document.body.innerHTML = appTemplate;
     function csvCell(value){ return `"${String(value??'').replace(/"/g,'""')}"`; }
 
     document.getElementById('copyBtn').addEventListener('click',async()=>{
+      if(!latestSummary){ showToast('Please upload a CSV before copying.', 'Action Required', '⚠️'); return; }
       const text=document.getElementById('message').value;
-      if(!latestSummary){ setStatus('Upload CSV before copying.','err'); return; }
-      try{ await navigator.clipboard.writeText(text); setStatus('copied.','ok'); }
-      catch{ const ta=document.getElementById('message'); ta.select(); document.execCommand('copy'); setStatus('copied.','ok'); }
+      try{ await navigator.clipboard.writeText(text); showToast('The summary message has been copied to your clipboard.', 'Copied!', '✅'); }
+      catch{ const ta=document.getElementById('message'); ta.select(); document.execCommand('copy'); showToast('The summary message has been copied to your clipboard.', 'Copied!', '✅'); }
     });
     document.getElementById('downloadBtn').addEventListener('click',()=>{
       if(!latestSummary){ setStatus('Upload CSV before downloading.','err'); return; }
