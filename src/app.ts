@@ -1286,7 +1286,7 @@ document.body.innerHTML = appTemplate;
       }
 
       const abandonMtdStr = m.abandonRate > 0.05 ? `${pct(m.abandonRate)} (⚠️ above 5% threshold)` : pct(m.abandonRate);
-      const msg=`SLA Update | ${shortDate(latest)} | ${ist} IST / ${bst} BST\n----------------------------------------------\n📞 VOLUME\n   Offered: ${fmt(t.offered)} | Handled: ${fmt(t.handled)} | Abandoned: ${fmt(t.abandonExFast)} (${t.offered?pct(t.abandonExFast/t.offered):'0%'})\n   Avg Offered/Day (MTD): ${fmt(avgOfferedPerDay)}\n\n⏱️ PERFORMANCE\n   Call GOS Today: ${pct(t.gos)}${gosDeltaStr}\n   Call GOS MTD:   ${pct(m.gos)}\n   ASA Today:      ${t.avgAsa?fmtSec(t.avgAsa):'-'}\n   AHT Today:      ${t.avgAht?fmtMinSec(t.avgAht):'-'} | AHT MTD: ${m.avgAht?fmtMinSec(m.avgAht):'-'}\n   Abandon MTD:    ${abandonMtdStr}\n----------------------------------------------`;
+      const msg=`SLA Update | ${shortDate(latest)} | ${ist} IST / ${bst} BST\n----------------------------------------------\n📞 VOLUME\n   Offered: ${fmt(t.offered)} | Handled: ${fmt(t.handled)} | Abandoned: ${fmt(t.abandonExFast)} (${t.offered?pct(t.abandonExFast/t.offered):'0%'})\n   Avg Offered/Day (MTD): ${fmt(avgOfferedPerDay)}\n\n⏱️ PERFORMANCE\n   Call GOS Today: ${pct(t.gos)}${gosDeltaStr}\n   Call GOS MTD:   ${pct(m.gos)}\n   AHT Today:      ${t.avgAht?fmtMinSec(t.avgAht):'-'} | AHT MTD: ${m.avgAht?fmtMinSec(m.avgAht):'-'}\n   Abandon MTD:    ${abandonMtdStr}\n----------------------------------------------`;
       document.getElementById('kDate').textContent=dateLabel(latest);
       document.getElementById('kVol').textContent=fmt(t.offered);
       document.getElementById('kGosToday').textContent=pct(t.gos);
