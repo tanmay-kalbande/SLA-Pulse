@@ -118,13 +118,6 @@
     .credit-word{
       display:inline-block;
       color:#999;
-      animation: wordColorWave 6s ease-in-out infinite;
-    }
-    .credit-word:nth-child(1){ animation-delay: 0s; }
-    .credit-word:nth-child(2){ animation-delay: 0.6s; }
-    @keyframes wordColorWave {
-      0%,  30%, 100% { color: #999; }
-      15%            { color: #3B82F6; }
     }
 
     /* ── MAIN AREA ── */
