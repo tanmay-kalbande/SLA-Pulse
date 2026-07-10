@@ -290,12 +290,6 @@ export const appTemplate = `
           <article class="kpi clickable" id="kpiGosMtd"><div class="kpi-label">Call GOS MTD</div><div class="kpi-value" id="kGosMtd">-</div><div class="kpi-sub">Month to date</div></article>
           <article class="kpi"><div class="kpi-label">Abandon Today</div><div class="kpi-value" id="kAbToday">-</div><div class="kpi-sub">Excluding fast abandons</div></article>
           <article class="kpi"><div class="kpi-label">Abandon MTD</div><div class="kpi-value" id="kAbMtd">-</div><div class="kpi-sub">Abandon excl. fast / offered</div></article>
-          <article class="kpi"><div class="kpi-label">AHT Today</div><div class="kpi-value" id="kAhtToday">-</div><div class="kpi-sub">Avg handle time</div></article>
-          <article class="kpi"><div class="kpi-label">AHT MTD</div><div class="kpi-value" id="kAhtMtd">-</div><div class="kpi-sub">Month to date</div></article>
-          <article class="kpi"><div class="kpi-label">ASA Today</div><div class="kpi-value" id="kAsaToday">-</div><div class="kpi-sub">Avg speed of answer</div></article>
-          <article class="kpi"><div class="kpi-label">Handled Today</div><div class="kpi-value" id="kHandledToday">-</div><div class="kpi-sub">Voice calls handled</div></article>
-          <article class="kpi"><div class="kpi-label">Agents Today</div><div class="kpi-value" id="kAgentsToday">-</div><div class="kpi-sub">Unique agents logged</div></article>
-          <article class="kpi"><div class="kpi-label">Avg Offered/Day</div><div class="kpi-value" id="kAvgOffered">-</div><div class="kpi-sub">MTD daily average</div></article>
         </div>
         <div class="validation" aria-label="Data validation summary">
           <div class="check" id="checkUpload"><span>Upload</span><strong>Waiting</strong></div>

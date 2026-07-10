@@ -1273,20 +1273,26 @@ document.body.innerHTML = appTemplate;
       const mtdDayCount=mtdDayKeys.size||1;
       const avgOfferedPerDay=Math.round(m.voice/mtdDayCount);
 
-      const abandonMtdStr = m.abandonRate > 0.08 ? `${pct(m.abandonRate)} (⚠️ above 8% threshold)` : pct(m.abandonRate);
-      const msg=`SLA Update | ${shortDate(latest)} | ${ist} IST / ${bst} BST\n--------------------------------------------\n- Call GOS Today: ${pct(t.gos)}\n- Call GOS MTD: ${pct(m.gos)}\n- Volume Today: ${fmt(t.offered)}\n- Abandon Today: ${fmt(t.abandonExFast)}\n- Abandon MTD: ${abandonMtdStr}\n--------------------------------------------`;
+      // Calculate yesterday's GOS for delta arrow
+      const latestMid=new Date(latest); latestMid.setHours(0,0,0,0);
+      const yesterdayMid=new Date(latestMid); yesterdayMid.setDate(yesterdayMid.getDate()-1);
+      const yesterdayKey=dateKey(yesterdayMid);
+      const yesterdayRows=rows.filter(r=>dateKey(r._dt)===yesterdayKey);
+      const y=calc(yesterdayRows);
+      let gosDeltaStr='';
+      if(yesterdayRows.length>0){
+        const diff=t.gos-y.gos;
+        gosDeltaStr=diff>0.001?' (▲ vs yesterday)':diff<-0.001?' (▼ vs yesterday)':' (→ vs yesterday)';
+      }
+
+      const abandonMtdStr = m.abandonRate > 0.05 ? `${pct(m.abandonRate)} (⚠️ above 5% threshold)` : pct(m.abandonRate);
+      const msg=`SLA Update | ${shortDate(latest)} | ${ist} IST / ${bst} BST\n----------------------------------------------\n📞 VOLUME\n   Offered: ${fmt(t.offered)} | Handled: ${fmt(t.handled)} | Abandoned: ${fmt(t.abandonExFast)} (${t.offered?pct(t.abandonExFast/t.offered):'0%'})\n   Avg Offered/Day (MTD): ${fmt(avgOfferedPerDay)}\n\n⏱️ PERFORMANCE\n   Call GOS Today: ${pct(t.gos)}${gosDeltaStr}\n   Call GOS MTD:   ${pct(m.gos)}\n   ASA Today:      ${t.avgAsa?fmtSec(t.avgAsa):'-'}\n   AHT Today:      ${t.avgAht?fmtMinSec(t.avgAht):'-'} | AHT MTD: ${m.avgAht?fmtMinSec(m.avgAht):'-'}\n   Abandon MTD:    ${abandonMtdStr}\n----------------------------------------------`;
       document.getElementById('kDate').textContent=dateLabel(latest);
       document.getElementById('kVol').textContent=fmt(t.offered);
       document.getElementById('kGosToday').textContent=pct(t.gos);
       document.getElementById('kGosMtd').textContent=pct(m.gos);
       document.getElementById('kAbToday').textContent=fmt(t.abandonExFast);
       document.getElementById('kAbMtd').textContent=pct(m.abandonRate);
-      document.getElementById('kAhtToday').textContent=t.avgAht?fmtMinSec(t.avgAht):'-';
-      document.getElementById('kAhtMtd').textContent=m.avgAht?fmtMinSec(m.avgAht):'-';
-      document.getElementById('kAsaToday').textContent=t.avgAsa?fmtSec(t.avgAsa):'-';
-      document.getElementById('kHandledToday').textContent=fmt(t.handled);
-      document.getElementById('kAgentsToday').textContent=fmt(t.agentCount);
-      document.getElementById('kAvgOffered').textContent=fmt(avgOfferedPerDay);
       document.getElementById('message').value=msg;
       document.getElementById('sOffered').textContent=fmt(m.offered);
       document.getElementById('sCallbacks').textContent=fmt(m.callbacks);
@@ -1319,7 +1325,7 @@ document.body.innerHTML = appTemplate;
 
     function resetKPIs(){
       latestSummary=null; allMappedRows=[];
-      ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','kAhtToday','kAhtMtd','kAsaToday','kHandledToday','kAgentsToday','kAvgOffered','sOffered','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast','sPeakHour'].forEach(id=>document.getElementById(id).textContent='-');
+      ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','sOffered','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast','sPeakHour'].forEach(id=>document.getElementById(id).textContent='-');
       document.getElementById('message').value='Upload Interactions.csv to generate the SLA update.';
     }
     function resetOutput(){ resetKPIs(); }
