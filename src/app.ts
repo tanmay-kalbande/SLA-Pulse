@@ -1247,19 +1247,48 @@ document.body.innerHTML = appTemplate;
           }
         }
 
-        return {offered:all.length,voice:voice.length,callbacks:callbacks.length,handled:handled.length,handledInSla:handledInSla.length,handledOutSla:handledOutSla.length,fastAbandons:fastAbandons.length,abandonExFast:abandonExFast.length,gos:handled.length?handledInSla.length/handled.length:0,abandonRate:all.length?abandonExFast.length/all.length:0,peakHour:peakHourStr};
+        // AHT calculation
+        const handleTimes=handled.map(r=>num(cell(r,'totalHandle'))).filter(v=>v>0);
+        const avgAht=handleTimes.length?handleTimes.reduce((s,v)=>s+v,0)/handleTimes.length:0;
+
+        // ASA calculation
+        const waitTimes=handled.map(r=>num(cell(r,'totalQueue'))).filter(v=>v>=0);
+        const avgAsa=waitTimes.length?waitTimes.reduce((s,v)=>s+v,0)/waitTimes.length:0;
+
+        // Unique agents
+        const uniqueAgents=new Set();
+        handled.forEach(r=>{
+          const uStr=String(cell(r,'users')||'').trim();
+          if(uStr) uStr.split(';').forEach(u=>{ const n=u.trim(); if(n) uniqueAgents.add(n); });
+        });
+
+        return {offered:all.length,voice:voice.length,callbacks:callbacks.length,handled:handled.length,handledInSla:handledInSla.length,handledOutSla:handledOutSla.length,fastAbandons:fastAbandons.length,abandonExFast:abandonExFast.length,gos:handled.length?handledInSla.length/handled.length:0,abandonRate:all.length?abandonExFast.length/all.length:0,peakHour:peakHourStr,avgAht,avgAsa,agentCount:uniqueAgents.size};
       }
       const t=calc(todayRows),m=calc(mtdRows);
       const now=new Date();
       const ist=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Kolkata'});
       const bst=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/London'});
-      const msg=`SLA Update | ${shortDate(latest)} | ${ist} IST / ${bst} BST\n--------------------------------------------\n- Call GOS Today: ${pct(t.gos)}\n- Call GOS MTD: ${pct(m.gos)}\n- Volume Today: ${fmt(t.offered)}\n- Abandon Today: ${fmt(t.abandonExFast)}\n- Abandon MTD: ${pct(m.abandonRate)}\n--------------------------------------------`;
+      // Calculate MTD days for avg calls offered
+      const mtdDayKeys=new Set(); mtdRows.forEach(r=>mtdDayKeys.add(dateKey(r._dt)));
+      const mtdDayCount=mtdDayKeys.size||1;
+      const avgOfferedPerDay=Math.round(m.voice/mtdDayCount);
+
+      // Utilization placeholder (agent occupancy heuristic: handled*avgAht / (agentCount * shiftMs))
+      const utilPct=t.agentCount>0&&t.avgAht>0?Math.min(100,Math.round((t.handled*t.avgAht)/(t.agentCount*8*3600*1000)*100)):0;
+
+      const msg=`SLA Update | ${shortDate(latest)} | ${ist} IST / ${bst} BST\n----------------------------------------------\n📞 VOLUME\n   Offered: ${fmt(t.offered)} | Handled: ${fmt(t.handled)} | Abandoned: ${fmt(t.abandonExFast)} (${t.offered?pct(t.abandonExFast/t.offered):'0%'})\n   Avg Offered/Day (MTD): ${fmt(avgOfferedPerDay)}\n\n⏱️ PERFORMANCE\n   Call GOS Today: ${pct(t.gos)}\n   Call GOS MTD:   ${pct(m.gos)}\n   ASA Today:      ${t.avgAsa?fmtSec(t.avgAsa):'-'}\n   AHT Today:      ${t.avgAht?fmtMinSec(t.avgAht):'-'} | AHT MTD: ${m.avgAht?fmtMinSec(m.avgAht):'-'}\n   Abandon MTD:    ${pct(m.abandonRate)}\n\n👥 STAFFING\n   Agents Logged:  ${fmt(t.agentCount)}\n   Utilization:    ${utilPct}%\n----------------------------------------------`;
       document.getElementById('kDate').textContent=dateLabel(latest);
       document.getElementById('kVol').textContent=fmt(t.offered);
       document.getElementById('kGosToday').textContent=pct(t.gos);
       document.getElementById('kGosMtd').textContent=pct(m.gos);
       document.getElementById('kAbToday').textContent=fmt(t.abandonExFast);
       document.getElementById('kAbMtd').textContent=pct(m.abandonRate);
+      document.getElementById('kAhtToday').textContent=t.avgAht?fmtMinSec(t.avgAht):'-';
+      document.getElementById('kAhtMtd').textContent=m.avgAht?fmtMinSec(m.avgAht):'-';
+      document.getElementById('kAsaToday').textContent=t.avgAsa?fmtSec(t.avgAsa):'-';
+      document.getElementById('kHandledToday').textContent=fmt(t.handled);
+      document.getElementById('kAgentsToday').textContent=fmt(t.agentCount);
+      document.getElementById('kAvgOffered').textContent=fmt(avgOfferedPerDay);
       document.getElementById('message').value=msg;
       document.getElementById('sOffered').textContent=fmt(m.offered);
       document.getElementById('sCallbacks').textContent=fmt(m.callbacks);
@@ -1292,7 +1321,7 @@ document.body.innerHTML = appTemplate;
 
     function resetKPIs(){
       latestSummary=null; allMappedRows=[];
-      ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','sOffered','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast','sPeakHour'].forEach(id=>document.getElementById(id).textContent='-');
+      ['kDate','kVol','kGosToday','kGosMtd','kAbToday','kAbMtd','kAhtToday','kAhtMtd','kAsaToday','kHandledToday','kAgentsToday','kAvgOffered','sOffered','sCallbacks','sHandled','sInSla','sOutSla','sFastAb','sAbExFast','sPeakHour'].forEach(id=>document.getElementById(id).textContent='-');
       document.getElementById('message').value='Upload Interactions.csv to generate the SLA update.';
     }
     function resetOutput(){ resetKPIs(); }
