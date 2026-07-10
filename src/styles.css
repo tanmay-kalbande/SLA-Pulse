@@ -154,7 +154,7 @@
 
     /* KPI cards */
     .kpi-panel{grid-template-rows:auto minmax(0,1fr) auto}
-    .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:8px;min-height:0;overflow:hidden;}
+    .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:8px;min-height:0;overflow:hidden;}
     .kpi{border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:12px 14px;display:grid;grid-template-rows:auto 1fr auto;min-width:0;min-height:0;overflow:hidden;transition:border-color .15s,box-shadow .15s;position:relative;}
     .kpi.clickable{cursor:pointer;}
     .kpi.clickable:hover{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
@@ -752,7 +752,7 @@
       .workspace{grid-template-columns:1fr;overflow:visible}
       .panel{min-height:360px}
       .message-panel{min-height:420px}
-      .kpis{min-height:440px}
+      .kpis{min-height:580px}
       .metric-list{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none}
       .validation{grid-template-columns:1fr}
       .actions{grid-template-columns:1fr}
