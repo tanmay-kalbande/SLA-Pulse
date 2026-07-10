@@ -1276,7 +1276,7 @@ document.body.innerHTML = appTemplate;
       // Utilization placeholder (agent occupancy heuristic: handled*avgAht / (agentCount * shiftMs))
       const utilPct=t.agentCount>0&&t.avgAht>0?Math.min(100,Math.round((t.handled*t.avgAht)/(t.agentCount*8*3600*1000)*100)):0;
 
-      const msg=`SLA Update | ${shortDate(latest)} | ${ist} IST / ${bst} BST\n----------------------------------------------\n📞 VOLUME\n   Offered: ${fmt(t.offered)} | Handled: ${fmt(t.handled)} | Abandoned: ${fmt(t.abandonExFast)} (${t.offered?pct(t.abandonExFast/t.offered):'0%'})\n   Avg Offered/Day (MTD): ${fmt(avgOfferedPerDay)}\n\n⏱️ PERFORMANCE\n   Call GOS Today: ${pct(t.gos)}\n   Call GOS MTD:   ${pct(m.gos)}\n   ASA Today:      ${t.avgAsa?fmtSec(t.avgAsa):'-'}\n   AHT Today:      ${t.avgAht?fmtMinSec(t.avgAht):'-'} | AHT MTD: ${m.avgAht?fmtMinSec(m.avgAht):'-'}\n   Abandon MTD:    ${pct(m.abandonRate)}\n\n👥 STAFFING\n   Agents Logged:  ${fmt(t.agentCount)}\n   Utilization:    ${utilPct}%\n----------------------------------------------`;
+      const msg=`SLA Update | ${shortDate(latest)} | ${ist} IST / ${bst} BST\n--------------------------------------------\n- Call GOS Today: ${pct(t.gos)}\n- Call GOS MTD: ${pct(m.gos)}\n- Volume Today: ${fmt(t.offered)}\n- Abandon Today: ${fmt(t.abandonExFast)}\n- Abandon MTD: ${pct(m.abandonRate)}\n--------------------------------------------`;
       document.getElementById('kDate').textContent=dateLabel(latest);
       document.getElementById('kVol').textContent=fmt(t.offered);
       document.getElementById('kGosToday').textContent=pct(t.gos);
